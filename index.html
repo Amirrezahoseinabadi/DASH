@@ -4,61 +4,232 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>داشبورد مدیریت مشتریان</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --bg-color: #1a1a2e;
+            --surface-color: #16213e;
+            --primary-color: #0f3460;
+            --secondary-color: #e94560;
+            --text-color: #dcdcdc;
+            --text-muted: #a0a0a0;
+            --border-color: #2a2a4e;
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f4f7f6;
-            color: #333;
+            font-family: 'Vazirmatn', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
             margin: 0;
-            padding: 20px;
+            padding: 2rem;
+            line-height: 1.6;
         }
+
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
-            background-color: #fff;
-            padding: 20px 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            background-color: var(--surface-color);
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color);
         }
-        h1 { color: #2c3e50; text-align: center; margin-bottom: 20px; }
-        .search-box { display: flex; gap: 10px; margin-bottom: 20px; align-items: center; }
-        .search-box input { flex-grow: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; }
-        .search-box button { padding: 10px 20px; border: none; background-color: #3498db; color: white; border-radius: 4px; cursor: pointer; font-size: 16px; transition: background-color 0.3s; }
-        .search-box button:hover { background-color: #2980b9; }
-        #fetchAllButton { background-color: #2ecc71; }
-        #fetchAllButton:hover { background-color: #27ae60; }
-        #loadingMessage { text-align: center; color: #777; font-style: italic; padding: 20px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 12px 15px; text-align: right; border-bottom: 1px solid #ddd; }
-        thead th { background-color: #ecf0f1; color: #34495e; font-weight: 600; }
-        tbody tr:nth-of-type(even) { background-color: #f9f9f9; }
-        tbody tr:hover { background-color: #f1f1f1; }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+        }
+
+        h1 {
+            color: #fff;
+            margin: 0;
+            font-size: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        h1 svg {
+            width: 32px;
+            height: 32px;
+            fill: var(--secondary-color);
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-box input {
+            padding: 12px 18px 12px 45px; /* Right padding for icon */
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            background-color: var(--primary-color);
+            color: var(--text-color);
+            transition: border-color 0.3s, box-shadow 0.3s;
+            min-width: 300px;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 3px rgba(233, 69, 96, 0.3);
+        }
+        
+        .search-box .icon {
+            position: absolute;
+            top: 50%;
+            right: 15px;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            stroke: var(--text-muted);
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            font-family: 'Vazirmatn', sans-serif;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background-color: var(--secondary-color);
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background-color: #c73a51;
+            box-shadow: 0 4px 15px rgba(233, 69, 96, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background-color: var(--primary-color);
+            color: var(--text-color);
+        }
+        .btn-secondary:hover {
+            background-color: #1a4a8a;
+        }
+
+        #loadingMessage {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 40px;
+            font-size: 1.1rem;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        th, td {
+            padding: 1rem 1.25rem;
+            text-align: right;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        thead th {
+            background-color: var(--primary-color);
+            color: #fff;
+            font-weight: 500;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        thead th:first-child { border-top-right-radius: 8px; }
+        thead th:last-child { border-top-left-radius: 8px; }
+
+        tbody tr {
+            transition: background-color 0.2s;
+        }
+
+        tbody tr:hover {
+            background-color: var(--primary-color);
+        }
+        
+        td {
+            color: var(--text-color);
+        }
+        
+        td:first-child {
+            font-weight: 500;
+            color: #fff;
+        }
+
+        @media (max-width: 768px) {
+            body { padding: 1rem; }
+            .container { padding: 1rem; }
+            .header { flex-direction: column; align-items: stretch; }
+            h1 { font-size: 1.5rem; }
+            .controls { flex-direction: column; align-items: stretch; }
+            .search-box input { width: 100%; box-sizing: border-box; min-width: unset; }
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>داشبورد مدیریت مشتریان</h1>
-        <div class="search-box">
-            <input type="text" id="searchInput" placeholder="جستجو بر اساس ID عددی مشتری...">
-            <button id="searchButton">جستجو</button>
-            <button id="fetchAllButton">نمایش همه</button>
-        </div>
+        <header class="header">
+            <h1>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                داشبورد مدیریت مشتریان
+            </h1>
+            <div class="controls">
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="جستجو بر اساس ID عددی مشتری...">
+                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                </div>
+                <button id="searchButton" class="btn btn-secondary">جستجو</button>
+                <button id="fetchAllButton" class="btn btn-primary">نمایش همه</button>
+            </div>
+        </header>
+
         <p id="loadingMessage">در حال بارگذاری اطلاعات از سرور...</p>
-        <table id="customerTable">
-            <thead>
-                <tr>
-                    <th>ID مشتری</th>
-                    <th>شماره تماس</th>
-                    <th>تعداد پنل</th>
-                    <th>ترافیک کل (GB)</th>
-                    <th>تاریخ ثبت‌نام</th>
-                </tr>
-            </thead>
-            <tbody id="tableBody"></tbody>
-        </table>
+        
+        <div class="table-wrapper">
+            <table id="customerTable" style="display: none;">
+                <thead>
+                    <tr>
+                        <th>ID مشتری</th>
+                        <th>شماره تماس</th>
+                        <th>تعداد پنل</th>
+                        <th>ترافیک کل (GB)</th>
+                        <th>تاریخ ثبت‌نام</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
     </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            const table = document.getElementById('customerTable');
             const tableBody = document.getElementById('tableBody');
             const loadingMessage = document.getElementById('loadingMessage');
             const searchInput = document.getElementById('searchInput');
@@ -72,8 +243,10 @@
                 if (!customers || customers.length === 0) {
                     loadingMessage.innerText = 'داده‌ای برای نمایش یافت نشد.';
                     loadingMessage.style.display = 'block';
+                    table.style.display = 'none';
                     return;
                 }
+                
                 customers.forEach(customer => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
@@ -85,46 +258,49 @@
                     `;
                     tableBody.appendChild(row);
                 });
+                
                 loadingMessage.style.display = 'none';
+                table.style.display = 'table';
+            }
+
+            async function fetchData(url) {
+                loadingMessage.innerText = 'در حال دریافت اطلاعات...';
+                loadingMessage.style.display = 'block';
+                table.style.display = 'none';
+                tableBody.innerHTML = '';
+
+                try {
+                    const response = await fetch(url, { cache: 'no-cache' });
+                    if (!response.ok) {
+                        if (response.status === 404) {
+                            loadingMessage.innerText = 'موردی یافت نشد.';
+                            return null;
+                        }
+                        throw new Error(`خطای شبکه: ${response.status}`);
+                    }
+                    return await response.json();
+                } catch (error) {
+                    console.error('Fetch error:', error);
+                    loadingMessage.innerText = 'خطا در ارتباط با سرور. لطفاً از فعال بودن سرور و پراکسی اطمینان حاصل کنید.';
+                    return null;
+                }
             }
 
             async function fetchAllCustomers() {
-                loadingMessage.innerText = 'در حال بارگذاری تمام مشتریان...';
-                loadingMessage.style.display = 'block';
-                tableBody.innerHTML = '';
-                try {
-                    const response = await fetch(`${API_BASE_URL}/api/customers`);
-                    if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-                    const data = await response.json();
-                    displayData(data);
-                } catch (error) {
-                    console.error('Fetch error:', error);
-                    loadingMessage.innerText = 'خطا در بارگذاری اطلاعات. آیا سرور فعال و قابل دسترس است؟';
-                }
+                const data = await fetchData(`${API_BASE_URL}/api/customers`);
+                if (data) displayData(data);
             }
 
             async function searchCustomer() {
                 const customerId = searchInput.value.trim();
                 if (!customerId || !/^\d+$/.test(customerId)) {
-                    alert('لطفاً یک ID عددی معتبر وارد کنید.');
+                    // Using a custom modal/alert would be better, but for simplicity:
+                    searchInput.style.borderColor = 'var(--secondary-color)';
+                    setTimeout(() => searchInput.style.borderColor = 'var(--border-color)', 2000);
                     return;
                 }
-                loadingMessage.innerText = `در حال جستجو برای ID ${customerId}...`;
-                loadingMessage.style.display = 'block';
-                tableBody.innerHTML = '';
-                try {
-                    const response = await fetch(`${API_BASE_URL}/api/customer/${customerId}`);
-                    if (response.status === 404) {
-                        loadingMessage.innerText = `مشتری با ID ${customerId} یافت نشد.`;
-                        return;
-                    }
-                    if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-                    const data = await response.json();
-                    displayData([data]);
-                } catch (error) {
-                    console.error('Search error:', error);
-                    loadingMessage.innerText = 'خطا در انجام جستجو.';
-                }
+                const data = await fetchData(`${API_BASE_URL}/api/customer/${customerId}`);
+                if (data) displayData([data]);
             }
 
             fetchAllButton.addEventListener('click', fetchAllCustomers);
@@ -133,6 +309,7 @@
                 if (event.key === 'Enter') searchCustomer();
             });
 
+            // Load initial data
             fetchAllCustomers();
         });
     </script>

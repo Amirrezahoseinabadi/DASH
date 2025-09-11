@@ -27,7 +27,7 @@
         .search-box button:hover { background-color: #2980b9; }
         #fetchAllButton { background-color: #2ecc71; }
         #fetchAllButton:hover { background-color: #27ae60; }
-        #loadingMessage { text-align: center; color: #777; font-style: italic; padding: 20px; display: block; }
+        #loadingMessage { text-align: center; color: #777; font-style: italic; padding: 20px; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { padding: 12px 15px; text-align: right; border-bottom: 1px solid #ddd; }
         thead th { background-color: #ecf0f1; color: #34495e; font-weight: 600; }
@@ -47,11 +47,13 @@
         <table id="customerTable">
             <thead>
                 <tr>
+                    <!-- [اصلاح] هماهنگ‌سازی عناوین جدول -->
                     <th>ID مشتری</th>
                     <th>شماره تماس</th>
                     <th>تعداد پنل</th>
                     <th>ترافیک کل (GB)</th>
                     <th>تاریخ ثبت‌نام</th>
+                    <th>اولین پیام</th>
                 </tr>
             </thead>
             <tbody id="tableBody"></tbody>
@@ -65,7 +67,6 @@
             const searchButton = document.getElementById('searchButton');
             const fetchAllButton = document.getElementById('fetchAllButton');
             
-            // آدرس API سرور شما
             const API_BASE_URL = 'https://marzban-dns.mooo.com';
 
             function displayData(customers) {
@@ -77,13 +78,14 @@
                 }
                 customers.forEach(customer => {
                     const row = document.createElement('tr');
-                    // *** اصلاح کلیدها برای مطابقت با خروجی API ***
+                    // [اصلاح کلیدی] استفاده از نام کلیدهای صحیح از JSON
                     row.innerHTML = `
-                        <td>${customer.id || '---'}</td>
+                        <td>${customer.customer_id || '---'}</td>
                         <td>${customer.phone_number || '---'}</td>
-                        <td>${customer.panel_count || 0}</td>
+                        <td>${customer.total_panels || 0}</td>
                         <td>${customer.total_traffic_gb || 0}</td>
                         <td>${customer.registration_date || '---'}</td>
+                        <td>${customer.first_message_date || '---'}</td>
                     `;
                     tableBody.appendChild(row);
                 });
@@ -135,9 +137,9 @@
                 if (event.key === 'Enter') searchCustomer();
             });
 
-            // در زمان بارگذاری صفحه، همه مشتریان را نمایش بده
             fetchAllCustomers();
         });
     </script>
 </body>
 </html>
+

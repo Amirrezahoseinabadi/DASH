@@ -81,13 +81,13 @@
   <script>
     // ***************************************************************
     // ** مهم: لطفاً آدرس ورکر خود را در خط زیر جایگزین کنید **
-    const WORKER_API_URL = 'https://robot-copen.amiruserbot7.workers.dev';
+    const WORKER_API_URL = 'https://robot-copen.amiruserbot7.workers.dev/api/CUSTOMER_ORDERS';
     // ***************************************************************
 
     document.addEventListener('DOMContentLoaded', async () => {
       const loadingEl = document.getElementById('loading');
       const contentEl = document.getElementById('content');
-      const totalCustomersEl = document.getElementById('total-customers');
+      const totalCustomersEl = document.getElementById('total-CUSTOMER_ORDERS');
       const totalPanelsEl = document.getElementById('total-panels');
       const tableBodyEl = document.getElementById('customer-table');
       const searchInputEl = document.getElementById('search-input');

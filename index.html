@@ -59,11 +59,8 @@
         </table>
     </div>
     <script>
-        // --- مرحله ۱: توابع کمکی اینجا اضافه شدند ---
+        // --- توابع کمکی برای تاریخ ---
 
-        /**
-         * Converts a Gregorian date to a Jalali date.
-         */
         function gregorianToJalali(gy, gm, gd) {
             var g_d_m = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
             var gy2 = (gm > 2) ? (gy + 1) : gy;
@@ -81,10 +78,6 @@
             return [jy, jm, jd];
         }
 
-        /**
-         * Formats an ISO-like date string to a Shamsi date and time string.
-         * e.g., "Mon, 24 Mar 2025 01:52:04 GMT" -> "1404/01/04 در ساعت 01:52:04"
-         */
         function formatShamsiDate(isoString) {
             if (!isoString) return '---';
             const date = new Date(isoString);
@@ -101,18 +94,7 @@
             return `${formattedDate} در ساعت ${formattedTime}`;
         }
 
-        /**
-         * Extracts a phone number from a note string.
-         * e.g., "+ شماره تلفن شما : 09369730429" -> "09369730429"
-         */
-        function extractPhoneNumber(note) {
-            if (!note || typeof note !== 'string') {
-                return '---';
-            }
-            const match = note.match(/: (\d+)/);
-            return match ? match[1] : '---';
-        }
-
+        // --- تابع extractPhoneNumber حذف شد چون دیگر لازم نیست ---
 
         document.addEventListener('DOMContentLoaded', function() {
             const tableBody = document.getElementById('tableBody');
@@ -123,7 +105,6 @@
             
             const API_BASE_URL = 'https://marzban-dns.mooo.com';
 
-            // --- مرحله ۲: تابع displayData با منطق جدید آپدیت شد ---
             function displayData(customers) {
                 tableBody.innerHTML = '';
                 if (!customers || customers.length === 0) {
@@ -134,11 +115,11 @@
                 customers.forEach(customer => {
                     const row = document.createElement('tr');
                     
-                    // فراخوانی توابع جدید برای تبدیل داده‌ها
                     const shamsiRegistrationDate = formatShamsiDate(customer.registration_date);
                     const shamsiFirstMessageDate = formatShamsiDate(customer.first_message_date);
-                    // فرض بر این است که شماره تماس در فیلد note ذخیره شده
-                    const phoneNumber = extractPhoneNumber(customer.note);
+                    
+                    // --- تغییر کلیدی: حالا مستقیماً از فیلد phone_number می‌خوانیم ---
+                    const phoneNumber = customer.phone_number || '---';
 
                     row.innerHTML = `
                         <td>${customer.customer_id || '---'}</td>
@@ -203,3 +184,4 @@
     </script>
 </body>
 </html>
+

@@ -52,7 +52,6 @@
                     <th>تعداد پنل</th>
                     <th>ترافیک کل (GB)</th>
                     <th>تاریخ ثبت‌نام</th>
-                    <th>اولین پیام</th>
                 </tr>
             </thead>
             <tbody id="tableBody"></tbody>
@@ -66,7 +65,6 @@
             const searchButton = document.getElementById('searchButton');
             const fetchAllButton = document.getElementById('fetchAllButton');
             
-            // آدرس امن سرور شما که توسط Caddy مدیریت می‌شود
             const API_BASE_URL = 'https://marzban-dns.mooo.com';
 
             function displayData(customers) {
@@ -84,7 +82,6 @@
                         <td>${customer.panels || 0}</td>
                         <td>${customer.traffic_gb || 0}</td>
                         <td>${customer.reg_date || '---'}</td>
-                        <td>${customer.first_seen || '---'}</td>
                     `;
                     tableBody.appendChild(row);
                 });
@@ -141,4 +138,3 @@
     </script>
 </body>
 </html>
-

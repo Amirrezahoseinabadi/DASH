@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- API Configuration ---
     // This is the public IP address of your server
-    const API_BASE_URL = 'https://marzban-dns.mooo.com/api';
+    const API_BASE_URL = 'http://138.124.52.21:5000/api';
 
     // --- Functions ---
 

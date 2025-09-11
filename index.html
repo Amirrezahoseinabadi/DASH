@@ -28,7 +28,7 @@
         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
       </svg>
-      <p class="mt-4 text-lg font-semibold text-gray-700">در حال بارگذاری اطلاعات از دیتابیس...</p>
+      <p id="loading-text" class="mt-4 text-lg font-semibold text-gray-700">در حال بارگذاری اطلاعات از دیتابیس...</p>
     </div>
 
     <!-- Main Content - Hidden initially -->
@@ -79,31 +79,42 @@
   </div>
 
   <script>
-    // ***************************************************************
     // ** مهم: لطفاً آدرس ورکر خود را در خط زیر جایگزین کنید **
-    const WORKER_API_URL = 'https://robot-copen.amiruserbot7.workers.dev/api/CUSTOMER_ORDERS';
-    // ***************************************************************
+    const WORKER_BASE_URL = 'https://robot-copen.amiruserbot7.workers.dev';
 
     document.addEventListener('DOMContentLoaded', async () => {
       const loadingEl = document.getElementById('loading');
+      const loadingTextEl = document.getElementById('loading-text');
       const contentEl = document.getElementById('content');
-      const totalCustomersEl = document.getElementById('total-CUSTOMER_ORDERS');
+      const totalCustomersEl = document.getElementById('total-customers');
       const totalPanelsEl = document.getElementById('total-panels');
       const tableBodyEl = document.getElementById('customer-table');
       const searchInputEl = document.getElementById('search-input');
 
       try {
-        // Fetch data from our worker's API endpoint
-        const response = await fetch(WORKER_API_URL);
-        if (!response.ok) {
-          throw new Error(`Network response was not ok (${response.status})`);
+        let allCustomers = [];
+        let cursor = null;
+        let isComplete = false;
+        
+        // Fetch data in chunks
+        while (!isComplete) {
+          const apiUrl = cursor ? `${WORKER_BASE_URL}/api/data?cursor=${cursor}` : `${WORKER_BASE_URL}/api/data`;
+          const response = await fetch(apiUrl);
+
+          if (!response.ok) {
+            throw new Error(`Network response was not ok (${response.status})`);
+          }
+
+          const data = await response.json();
+          allCustomers = allCustomers.concat(data.entries);
+          cursor = data.cursor;
+          isComplete = data.list_complete;
+          
+          loadingTextEl.textContent = `در حال بارگذاری... ${allCustomers.length.toLocaleString('fa-IR')} مشتری دریافت شد.`;
         }
-        const data = await response.json();
 
         // Sort data by panel count (descending)
-        data.sort((a, b) => b.count - a.count);
-
-        let allCustomers = data;
+        allCustomers.sort((a, b) => b.count - a.count);
 
         // Calculate stats and render table
         function renderTable(customers) {
@@ -149,3 +160,4 @@
 
 </body>
 </html>
+

@@ -22,7 +22,7 @@
       <p class="text-gray-600 mt-2">آمار لحظه‌ای مشتریان و شانس‌های شرکت در قرعه‌کشی</p>
     </header>
 
-    <!-- Loading Spinner -->
+    <!-- Loading State -->
     <div id="loading" class="text-center py-10">
       <svg class="animate-spin h-10 w-10 text-blue-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -80,7 +80,7 @@
 
   <script>
     // ** مهم: لطفاً آدرس ورکر خود را در خط زیر جایگزین کنید **
-    const WORKER_BASE_URL = 'https://robot-copen.amiruserbot7.workers.dev';
+    const WORKER_API_URL = 'https://robot-copen.amiruserbot7.workers.dev/api/data';
 
     document.addEventListener('DOMContentLoaded', async () => {
       const loadingEl = document.getElementById('loading');
@@ -91,52 +91,54 @@
       const tableBodyEl = document.getElementById('customer-table');
       const searchInputEl = document.getElementById('search-input');
 
+      let allCustomers = [];
+
       try {
-        let allCustomers = [];
         let cursor = null;
-        let isComplete = false;
-        
-        // Fetch data in chunks
-        while (!isComplete) {
-          const apiUrl = cursor ? `${WORKER_BASE_URL}/api/data?cursor=${cursor}` : `${WORKER_BASE_URL}/api/data`;
-          const response = await fetch(apiUrl);
+        let list_complete = false;
+        let fetchedCount = 0;
 
+        // Fetch data in chunks until all data is loaded
+        while (!list_complete) {
+          const url = cursor ? `${WORKER_API_URL}?cursor=${cursor}` : WORKER_API_URL;
+          const response = await fetch(url);
           if (!response.ok) {
-            throw new Error(`Network response was not ok (${response.status})`);
+            throw new Error('Network response was not ok');
           }
-
           const data = await response.json();
           allCustomers = allCustomers.concat(data.entries);
+          list_complete = data.list_complete;
           cursor = data.cursor;
-          isComplete = data.list_complete;
-          
-          loadingTextEl.textContent = `در حال بارگذاری... ${allCustomers.length.toLocaleString('fa-IR')} مشتری دریافت شد.`;
-        }
 
+          fetchedCount += data.entries.length;
+          loadingTextEl.textContent = `در حال بارگذاری... ${fetchedCount} مشتری دریافت شد.`;
+        }
+        
         // Sort data by panel count (descending)
         allCustomers.sort((a, b) => b.count - a.count);
 
-        // Calculate stats and render table
-        function renderTable(customers) {
-          tableBodyEl.innerHTML = ''; // Clear existing table
-          let totalPanels = 0;
-          customers.forEach((customer, index) => {
-            totalPanels += customer.count;
-            const row = document.createElement('tr');
-            row.innerHTML = \`
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">\${index + 1}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">\${customer.id}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-700">\${customer.count}</td>
-            \`;
-            tableBodyEl.appendChild(row);
-          });
-          // Update stats
-          totalCustomersEl.textContent = customers.length.toLocaleString('fa-IR');
-          totalPanelsEl.textContent = totalPanels.toLocaleString('fa-IR');
+        // Function to render the table and stats
+        function renderUI(customers) {
+            tableBodyEl.innerHTML = ''; // Clear existing table
+            let totalPanels = 0;
+
+            customers.forEach((customer, index) => {
+              totalPanels += customer.count;
+              const row = document.createElement('tr');
+              row.innerHTML = `
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${index + 1}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${customer.id}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-700">${customer.count}</td>
+              `;
+              tableBodyEl.appendChild(row);
+            });
+            
+            totalCustomersEl.textContent = customers.length.toLocaleString('fa-IR');
+            totalPanelsEl.textContent = totalPanels.toLocaleString('fa-IR');
         }
         
         // Initial render
-        renderTable(allCustomers);
+        renderUI(allCustomers);
         
         // Search functionality
         searchInputEl.addEventListener('input', (e) => {
@@ -144,7 +146,7 @@
           const filteredCustomers = allCustomers.filter(customer => 
             customer.id.toLowerCase().includes(searchTerm)
           );
-          renderTable(filteredCustomers);
+          renderUI(filteredCustomers);
         });
 
         // Show content
@@ -152,7 +154,7 @@
         contentEl.classList.remove('hidden');
 
       } catch (error) {
-        loadingEl.innerHTML = '<p class="text-red-500 font-bold">خطا در بارگذاری اطلاعات. لطفاً از فعال بودن ورکر و صحیح بودن آدرس API اطمینان حاصل کنید.</p>';
+        loadingEl.innerHTML = '<p class="text-red-500 font-bold">خطا در بارگذاری اطلاعات. لطفاً از فعال بودن ورکر و رفع مشکلات CORS اطمینان حاصل کنید و صفحه را رفرش کنید.</p>';
         console.error('Failed to fetch data:', error);
       }
     });

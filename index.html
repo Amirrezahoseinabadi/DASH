@@ -66,8 +66,8 @@
             const searchButton = document.getElementById('searchButton');
             const fetchAllButton = document.getElementById('fetchAllButton');
             
-            // چون صفحه و API هر دو از یکجا سرو می‌شوند، نیازی به آدرس کامل نیست
-            const API_BASE_URL = '';
+            // آدرس امن سرور شما که توسط Caddy مدیریت می‌شود
+            const API_BASE_URL = 'https://marzban-dns.mooo.com';
 
             function displayData(customers) {
                 tableBody.innerHTML = '';
@@ -141,3 +141,4 @@
     </script>
 </body>
 </html>
+

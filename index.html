@@ -47,7 +47,6 @@
         <table id="customerTable">
             <thead>
                 <tr>
-                    <!-- [اصلاح] هماهنگ‌سازی عناوین جدول -->
                     <th>ID مشتری</th>
                     <th>شماره تماس</th>
                     <th>تعداد پنل</th>
@@ -60,6 +59,61 @@
         </table>
     </div>
     <script>
+        // --- مرحله ۱: توابع کمکی اینجا اضافه شدند ---
+
+        /**
+         * Converts a Gregorian date to a Jalali date.
+         */
+        function gregorianToJalali(gy, gm, gd) {
+            var g_d_m = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
+            var gy2 = (gm > 2) ? (gy + 1) : gy;
+            var days = 355666 + (365 * gy) + ~~((gy2 + 3) / 4) - ~~((gy2 + 99) / 100) + ~~((gy2 + 399) / 400) + gd + g_d_m[gm - 1];
+            var jy = -1595 + (33 * ~~(days / 12053));
+            days %= 12053;
+            jy += 4 * ~~(days / 1461);
+            days %= 1461;
+            if (days > 365) {
+                jy += ~~((days - 1) / 365);
+                days = (days - 1) % 365;
+            }
+            var jm = (days < 186) ? 1 + ~~(days / 31) : 7 + ~~((days - 186) / 30);
+            var jd = 1 + ((days < 186) ? (days % 31) : ((days - 186) % 30));
+            return [jy, jm, jd];
+        }
+
+        /**
+         * Formats an ISO-like date string to a Shamsi date and time string.
+         * e.g., "Mon, 24 Mar 2025 01:52:04 GMT" -> "1404/01/04 در ساعت 01:52:04"
+         */
+        function formatShamsiDate(isoString) {
+            if (!isoString) return '---';
+            const date = new Date(isoString);
+            const [year, month, day] = [date.getUTCFullYear(), date.getUTCMonth() + 1, date.getUTCDate()];
+            const [jy, jm, jd] = gregorianToJalali(year, month, day);
+
+            const hours = String(date.getUTCHours()).padStart(2, '0');
+            const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+            const seconds = String(date.getUTCSeconds()).padStart(2, '0');
+
+            const formattedDate = `${jy}/${String(jm).padStart(2, '0')}/${String(jd).padStart(2, '0')}`;
+            const formattedTime = `${hours}:${minutes}:${seconds}`;
+
+            return `${formattedDate} در ساعت ${formattedTime}`;
+        }
+
+        /**
+         * Extracts a phone number from a note string.
+         * e.g., "+ شماره تلفن شما : 09369730429" -> "09369730429"
+         */
+        function extractPhoneNumber(note) {
+            if (!note || typeof note !== 'string') {
+                return '---';
+            }
+            const match = note.match(/: (\d+)/);
+            return match ? match[1] : '---';
+        }
+
+
         document.addEventListener('DOMContentLoaded', function() {
             const tableBody = document.getElementById('tableBody');
             const loadingMessage = document.getElementById('loadingMessage');
@@ -69,6 +123,7 @@
             
             const API_BASE_URL = 'https://marzban-dns.mooo.com';
 
+            // --- مرحله ۲: تابع displayData با منطق جدید آپدیت شد ---
             function displayData(customers) {
                 tableBody.innerHTML = '';
                 if (!customers || customers.length === 0) {
@@ -78,14 +133,20 @@
                 }
                 customers.forEach(customer => {
                     const row = document.createElement('tr');
-                    // [اصلاح کلیدی] استفاده از نام کلیدهای صحیح از JSON
+                    
+                    // فراخوانی توابع جدید برای تبدیل داده‌ها
+                    const shamsiRegistrationDate = formatShamsiDate(customer.registration_date);
+                    const shamsiFirstMessageDate = formatShamsiDate(customer.first_message_date);
+                    // فرض بر این است که شماره تماس در فیلد note ذخیره شده
+                    const phoneNumber = extractPhoneNumber(customer.note);
+
                     row.innerHTML = `
                         <td>${customer.customer_id || '---'}</td>
-                        <td>${customer.phone_number || '---'}</td>
+                        <td>${phoneNumber}</td>
                         <td>${customer.total_panels || 0}</td>
                         <td>${customer.total_traffic_gb || 0}</td>
-                        <td>${customer.registration_date || '---'}</td>
-                        <td>${customer.first_message_date || '---'}</td>
+                        <td>${shamsiRegistrationDate}</td>
+                        <td>${shamsiFirstMessageDate}</td>
                     `;
                     tableBody.appendChild(row);
                 });
@@ -142,4 +203,3 @@
     </script>
 </body>
 </html>
-

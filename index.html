@@ -6,7 +6,7 @@
     <title>🏆 نفرات برتر جشنواره</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700;900&display=swap');
         
         :root {
             --tg-theme-bg-color: #ffffff;
@@ -16,12 +16,11 @@
             --tg-theme-button-color: #2481cc;
             --tg-theme-button-text-color: #ffffff;
             --tg-theme-secondary-bg-color: #f4f4f5;
-            --top-user-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0));
-            --top-user-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
             --item-bg: rgba(255, 255, 255, 0.6);
             --gold-color: #FFD700;
             --silver-color: #C0C0C0;
             --bronze-color: #CD7F32;
+            --progress-bar-color: #e74c3c;
         }
 
         body {
@@ -47,6 +46,86 @@
             margin-bottom: 20px;
         }
 
+        /* --- START: Animated Header Styles --- */
+        #animated-header {
+            background: rgba(255, 255, 255, 0.35);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            padding: 20px;
+            margin-bottom: 25px;
+            text-align: center;
+            opacity: 0; /* Start hidden */
+            transform: translateY(-50px); /* Start off-screen */
+            animation: slideIn 1s ease-out 0.5s forwards; /* Animation */
+        }
+
+        @keyframes slideIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        #countdown-text {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--tg-theme-text-color);
+            line-height: 1.7;
+            margin-bottom: 15px;
+        }
+        
+        #countdown-text .highlight {
+            font-weight: 900;
+            color: var(--tg-theme-button-color);
+            font-size: 19px;
+            margin: 0 2px;
+        }
+        
+        #progress-bar-container {
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.1);
+            border-radius: 25px;
+            height: 8px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        #progress-bar {
+            width: 100%;
+            height: 100%;
+            background: var(--progress-bar-color);
+            border-radius: 25px;
+            transition: width 1s linear; /* Smooth transition */
+        }
+
+        #participants-info {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: var(--tg-theme-hint-color);
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px dashed rgba(0,0,0,0.1);
+        }
+
+        #participants-info svg {
+            width: 20px;
+            height: 20px;
+            margin-left: 8px;
+            fill: var(--tg-theme-hint-color);
+        }
+        
+        #participants-info .count-value {
+            font-weight: 700;
+            color: var(--tg-theme-link-color);
+            font-size: 16px;
+        }
+        /* --- END: Animated Header Styles --- */
+
         #leaderboard-list {
             list-style: none;
             padding: 0;
@@ -59,138 +138,46 @@
             padding: 12px;
             border-radius: 12px;
             background: var(--item-bg);
-            backdrop-filter: blur(5px);
-            -webkit-backdrop-filter: blur(5px);
-            border: 1px solid rgba(255, 255, 255, 0.18);
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
-
-        .list-item:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-        }
-        
-        .list-item.top-3 {
-            background: var(--top-user-bg);
-            box-shadow: var(--top-user-shadow);
-            border: 1px solid;
-        }
-
-        .list-item.gold { border-color: var(--gold-color); }
-        .list-item.silver { border-color: var(--silver-color); }
-        .list-item.bronze { border-color: var(--bronze-color); }
-
         .rank {
             font-size: 20px;
             font-weight: 700;
             width: 45px;
             text-align: center;
             flex-shrink: 0;
-            position: relative;
         }
-        
-        .medal {
-            font-size: 28px;
-            animation: bounce 2s infinite ease-in-out;
-        }
-        
-        .list-item.silver .medal { animation-delay: 0.2s; }
-        .list-item.bronze .medal { animation-delay: 0.4s; }
-
-        .user-info {
-            flex-grow: 1;
-            margin-right: 15px;
-            overflow: hidden;
-        }
-
-        .user-name {
-            font-weight: 700;
-            font-size: 16px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .user-id {
-            font-size: 13px;
-            color: var(--tg-theme-hint-color);
-        }
-
-        /* --- بهبود جدید: استایل کادر امتیازات --- */
-        .points-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            border: 1.5px solid var(--tg-theme-button-color);
-            border-radius: 10px;
-            padding: 4px 12px;
-            min-width: 55px;
-            text-align: center;
-            background-color: transparent;
-            flex-shrink: 0;
-        }
-
-        .points-value {
-            font-size: 18px;
-            font-weight: 700;
-            line-height: 1.2;
-            color: var(--tg-theme-button-color);
-        }
-
-        .points-label {
-            font-size: 10px;
-            font-weight: 500;
-            line-height: 1;
-            color: var(--tg-theme-hint-color);
-        }
-
-        #pagination {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-top: 25px;
-        }
-
-        .nav-button {
-            background-color: var(--tg-theme-button-color);
-            color: var(--tg-theme-button-text-color);
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-family: 'Vazirmatn', sans-serif;
-            font-size: 16px;
-            cursor: pointer;
-            transition: opacity 0.2s;
-        }
-
-        .nav-button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        
-        #page-info {
-            margin: 0 20px;
-            font-weight: 500;
-        }
-
-        #loading, #error {
-            text-align: center;
-            font-size: 1.1em;
-            padding: 50px 20px;
-            color: var(--tg-theme-hint-color);
-        }
-
-        @keyframes bounce {
-            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-            40% { transform: translateY(-8px); }
-            60% { transform: translateY(-4px); }
-        }
+        .medal { font-size: 28px; }
+        .user-info { flex-grow: 1; margin-right: 15px; overflow: hidden; }
+        .user-name { font-weight: 700; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .user-id { font-size: 13px; color: var(--tg-theme-hint-color); }
+        .points-container { display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1.5px solid var(--tg-theme-button-color); border-radius: 10px; padding: 4px 12px; min-width: 55px; text-align: center; flex-shrink: 0; }
+        .points-value { font-size: 18px; font-weight: 700; color: var(--tg-theme-button-color); }
+        .points-label { font-size: 10px; font-weight: 500; color: var(--tg-theme-hint-color); }
+        #pagination { display: flex; justify-content: center; align-items: center; margin-top: 25px; }
+        .nav-button { background-color: var(--tg-theme-button-color); color: var(--tg-theme-button-text-color); border: none; padding: 10px 20px; border-radius: 8px; font-family: 'Vazirmatn', sans-serif; font-size: 16px; cursor: pointer; transition: opacity 0.2s; }
+        .nav-button:disabled { opacity: 0.5; cursor: not-allowed; }
+        #page-info { margin: 0 20px; font-weight: 500; }
+        #loading, #error { text-align: center; font-size: 1.1em; padding: 50px 20px; color: var(--tg-theme-hint-color); }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>🏆 نفرات برتر جشنواره</h1>
+
+        <div id="animated-header">
+            <div id="countdown-text">در حال محاسبه زمان...</div>
+            <div id="progress-bar-container">
+                <div id="progress-bar"></div>
+            </div>
+            <div id="participants-info">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+                <span id="participants-count-text">تعداد شرکت‌کنندگان تا این لحظه: 
+                    <span class="count-value">...</span>
+                </span>
+            </div>
+        </div>
+        
         <ul id="leaderboard-list"></ul>
         <div id="loading">... در حال بارگذاری اطلاعات ...</div>
         <div id="error" style="display:none;"></div>
@@ -208,6 +195,42 @@
         let totalPages = 1;
         let allUsers = [];
 
+        function startCountdown() {
+            const COUNTDOWN_DAYS = 7;
+            const totalDuration = COUNTDOWN_DAYS * 24 * 60 * 60 * 1000;
+            const countdownEndDate = new Date().getTime() + totalDuration;
+
+            const timerInterval = setInterval(function() {
+                const now = new Date().getTime();
+                const distance = countdownEndDate - now;
+
+                const countdownTextElement = document.getElementById("countdown-text");
+                const progressBarElement = document.getElementById("progress-bar");
+
+                if (distance < 0) {
+                    clearInterval(timerInterval);
+                    countdownTextElement.innerHTML = `🎉 قرعه کشی بزرگ آقای مرزبان با 50 میلیون جایزه نقدی به پایان رسید! 🎉`;
+                    document.getElementById("progress-bar-container").style.display = "none";
+                    return;
+                }
+                
+                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+
+                countdownTextElement.innerHTML = `
+                    فقط <span class="highlight">${days} روز</span> و 
+                    <span class="highlight">${hours} ساعت</span> و 
+                    <span class="highlight">${minutes} دقیقه</span> 
+                    مانده تا قرعه کشی بزرگ آقای مرزبان با 50 میلیون جایزه نقدی برای 10 نفر
+                `;
+                
+                const progressPercentage = (distance / totalDuration) * 100;
+                progressBarElement.style.width = `${progressPercentage}%`;
+
+            }, 1000);
+        }
+
         function initTelegramTheme() {
             try {
                 const tg = window.Telegram.WebApp;
@@ -221,19 +244,17 @@
                         root.style.setProperty(cssVar, theme[key]);
                     }
                 }
+                 if(theme.secondary_bg_color) {
+                    root.style.setProperty('--tg-theme-secondary-bg', theme.secondary_bg_color);
+                 } else {
+                    root.style.setProperty('--tg-theme-secondary-bg', '#f4f4f5');
+                 }
+
                 tg.expand();
             } catch (e) {
                 console.warn("Telegram WebApp script not found. Using default theme.");
+                document.documentElement.style.setProperty('--tg-theme-secondary-bg', '#f4f4f5');
             }
-        }
-
-        function obfuscateUsername(username) {
-            if (!username || username.length <= 5) {
-                return '@...';
-            }
-            const start = username.substring(0, 3);
-            const end = username.substring(username.length - 2);
-            return `@${start}...${end}`;
         }
 
         function renderPage(page) {
@@ -249,17 +270,16 @@
                 let rankContent;
                 let liClass = 'list-item';
 
-                if (overallRank === 1) { rankContent = '<span class="medal">🥇</span>'; liClass += ' top-3 gold'; } 
-                else if (overallRank === 2) { rankContent = '<span class="medal">🥈</span>'; liClass += ' top-3 silver'; } 
-                else if (overallRank === 3) { rankContent = '<span class="medal">🥉</span>'; liClass += ' top-3 bronze'; } 
+                if (overallRank === 1) { rankContent = '<span class="medal">🥇</span>';} 
+                else if (overallRank === 2) { rankContent = '<span class="medal">🥈</span>';} 
+                else if (overallRank === 3) { rankContent = '<span class="medal">🥉</span>';} 
                 else { rankContent = overallRank; }
                 
-                const usernameDisplay = user.username ? obfuscateUsername(user.username) : `ID: ...${user.id.slice(-4)}`;
+                const usernameDisplay = user.username ? `@...${user.username.slice(-4)}` : `ID: ...${String(user.id).slice(-4)}`;
 
                 const listItem = document.createElement('li');
                 listItem.className = liClass;
                 
-                // --- بهبود جدید: ساختار HTML برای کادر امتیازات ---
                 listItem.innerHTML = `
                     <div class="rank">${rankContent}</div>
                     <div class="user-info">
@@ -283,16 +303,16 @@
             const loadingElement = document.getElementById('loading');
             const errorElement = document.getElementById('error');
             const paginationElement = document.getElementById('pagination');
+            const participantsCountElement = document.querySelector('#participants-info .count-value');
 
             try {
                 const response = await fetch(API_URL);
-                if (!response.ok) {
-                    throw new Error((await response.json()).error || 'خطا در دریافت اطلاعات');
-                }
+                if (!response.ok) throw new Error('خطا در دریافت اطلاعات');
                 allUsers = await response.json();
 
                 if (allUsers.length === 0) {
                     loadingElement.textContent = 'هنوز هیچ شرکت‌کننده‌ای امتیازی کسب نکرده است.';
+                    participantsCountElement.textContent = '0';
                     return;
                 }
                 
@@ -301,30 +321,27 @@
                 
                 loadingElement.style.display = 'none';
                 paginationElement.style.display = 'flex';
+                participantsCountElement.textContent = allUsers.length;
 
             } catch (error) {
                 loadingElement.style.display = 'none';
                 errorElement.textContent = error.message;
                 errorElement.style.display = 'block';
+                participantsCountElement.textContent = 'خطا';
             }
         }
 
         document.getElementById('prev-btn').addEventListener('click', () => {
-            if (currentPage > 1) {
-                currentPage--;
-                renderPage(currentPage);
-            }
+            if (currentPage > 1) { currentPage--; renderPage(currentPage); }
         });
 
         document.getElementById('next-btn').addEventListener('click', () => {
-            if (currentPage < totalPages) {
-                currentPage++;
-                renderPage(currentPage);
-            }
+            if (currentPage < totalPages) { currentPage++; renderPage(currentPage); }
         });
         
         initTelegramTheme();
         fetchLeaderboard();
+        startCountdown();
 
     </script>
 </body>

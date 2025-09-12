@@ -116,14 +116,27 @@
             color: var(--tg-theme-hint-color);
         }
 
+        /* --- استایل جدید و جذاب‌تر برای کادر امتیازات --- */
         .points {
-            font-size: 16px;
-            font-weight: 700;
-            color: var(--tg-theme-button-color);
-            background-color: var(--tg-theme-secondary-bg-color);
+            display: flex;
+            align-items: baseline;
+            gap: 5px;
+            background-color: rgba(36, 129, 204, 0.1); /* پس‌زمینه ملایم */
+            color: #2481cc; /* رنگ اصلی متن */
             padding: 6px 14px;
-            border-radius: 20px;
+            border-radius: 30px; /* طراحی کپسولی */
+            font-weight: 700;
             flex-shrink: 0;
+            white-space: nowrap;
+        }
+
+        .points .points-value {
+            font-size: 18px;
+        }
+
+        .points .points-label {
+            font-size: 12px;
+            font-weight: 500;
         }
 
         #pagination {
@@ -190,19 +203,31 @@
         let allUsers = [];
 
         function initTelegramTheme() {
-            const tg = window.Telegram.WebApp;
-            tg.ready();
-            const theme = tg.themeParams;
-            const root = document.documentElement;
-            
-            // Set CSS variables from Telegram theme
-            for (const key in theme) {
-                if (key.endsWith('_color')) {
-                    const cssVar = `--tg-theme-${key.replace(/_/g, '-')}`;
-                    root.style.setProperty(cssVar, theme[key]);
+            try {
+                const tg = window.Telegram.WebApp;
+                tg.ready();
+                const theme = tg.themeParams;
+                const root = document.documentElement;
+                
+                for (const key in theme) {
+                    if (key.endsWith('_color')) {
+                        const cssVar = `--tg-theme-${key.replace(/_/g, '-')}`;
+                        root.style.setProperty(cssVar, theme[key]);
+                    }
                 }
+                tg.expand();
+            } catch (e) {
+                console.warn("Telegram WebApp script not found. Using default theme.");
             }
-            tg.expand();
+        }
+
+        function obfuscateUsername(username) {
+            if (!username || username.length <= 5) {
+                return '@...';
+            }
+            const start = username.substring(0, 3);
+            const end = username.substring(username.length - 2);
+            return `@${start}...${end}`;
         }
 
         function renderPage(page) {
@@ -223,17 +248,22 @@
                 else if (overallRank === 3) { rankContent = '<span class="medal">🥉</span>'; liClass += ' top-3 bronze'; } 
                 else { rankContent = overallRank; }
                 
-                const usernameDisplay = user.username ? `@${user.username}` : `کاربر ${user.id}`;
+                const usernameDisplay = user.username ? obfuscateUsername(user.username) : `ID: ...${user.id.slice(-4)}`;
 
                 const listItem = document.createElement('li');
                 listItem.className = liClass;
+                
+                // --- بهبود جدید: ساختار HTML برای کادر امتیازات ---
                 listItem.innerHTML = `
                     <div class="rank">${rankContent}</div>
                     <div class="user-info">
                         <div class="user-name">${user.first_name}</div>
                         <div class="user-id">${usernameDisplay}</div>
                     </div>
-                    <div class="points">${user.points}</div>
+                    <div class="points">
+                        <span class="points-value">${user.points}</span>
+                        <span class="points-label">امتیاز</span>
+                    </div>
                 `;
                 listElement.appendChild(listItem);
             });
@@ -287,11 +317,7 @@
             }
         });
         
-        try {
-            initTelegramTheme();
-        } catch (e) {
-            console.warn("Telegram WebApp script not found. Using default theme.");
-        }
+        initTelegramTheme();
         fetchLeaderboard();
 
     </script>

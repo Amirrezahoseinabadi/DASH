@@ -289,12 +289,9 @@
                 
                 let rankContent;
                 if (user.rank > 0) {
-                    if (user.rank === 1) { rankContent = '<span class="medal">🥇</span>'; }
-                    else if (user.rank === 2) { rankContent = '<span class="medal">🥈</span>'; }
-                    else if (user.rank === 3) { rankContent = '<span class="medal">🥉</span>'; }
-                    else { rankContent = user.rank; }
+                    rankContent = user.rank; // Always show the rank number, no medal
                 } else {
-                    rankContent = '...'; // Rank not in top 100
+                    rankContent = '...'; // Rank not in top 100 or not available
                 }
 
                 const usernameDisplay = user.username ? `@...${user.username.slice(-4)}` : `ID: ...${String(user.id).slice(-4)}`;
@@ -424,3 +421,4 @@
     </script>
 </body>
 </html>
+

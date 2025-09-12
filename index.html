@@ -1,372 +1,426 @@
-// =================================================================================
-//         کد نهایی ربات جشنواره تابستانی - نسخه 29 (افزودن API کاربر و لینک اشتراک‌گذاری)
-// =================================================================================
-
-export default {
-    async fetch(request, env, ctx) {
-        const url = new URL(request.url);
-        // Routing API requests
-        if (url.pathname === '/api/leaderboard') {
-            return await handleApiRequest(request, env);
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>🏆 نفرات برتر جشنواره</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700;900&display=swap');
+        
+        :root {
+            --tg-theme-bg-color: #ffffff;
+            --tg-theme-text-color: #000000;
+            --tg-theme-hint-color: #999999;
+            --tg-theme-link-color: #2481cc;
+            --tg-theme-button-color: #2481cc;
+            --tg-theme-button-text-color: #ffffff;
+            --tg-theme-secondary-bg-color: #f4f4f5;
+            --item-bg: rgba(255, 255, 255, 0.6);
+            --gold-color: #FFD700;
+            --silver-color: #C0C0C0;
+            --bronze-color: #CD7F32;
+            --progress-bar-color: #e74c3c;
         }
-        if (url.pathname.startsWith('/api/user/')) {
-            return await handleUserApiRequest(request, env);
+
+        body {
+            font-family: 'Vazirmatn', sans-serif;
+            margin: 0;
+            padding: 15px;
+            background-color: var(--tg-theme-secondary-bg-color);
+            color: var(--tg-theme-text-color);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            overscroll-behavior-y: none;
         }
 
-        // Handling Telegram updates
-        try {
-            const contentType = request.headers.get('content-type');
-            if (!contentType || !contentType.includes('application/json')) {
-                if (env.REAL_BOT_HOST_URL) {
-                    ctx.waitUntil(forwardRawBody(request, "", env.REAL_BOT_HOST_URL));
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--tg-theme-text-color);
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        /* --- START: Animated Header Styles --- */
+        #animated-header {
+            background: rgba(255, 255, 255, 0.35);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            padding: 20px;
+            margin-bottom: 25px;
+            text-align: center;
+            opacity: 0; /* Start hidden */
+            transform: translateY(-50px); /* Start off-screen */
+            animation: slideIn 1s ease-out 0.5s forwards; /* Animation */
+        }
+
+        @keyframes slideIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        #countdown-text {
+            font-size: 15px; /* Font size reduced for better look */
+            font-weight: 500;
+            color: var(--tg-theme-text-color);
+            line-height: 1.7;
+            margin-bottom: 15px;
+        }
+        
+        #countdown-text .highlight {
+            font-weight: 900;
+            color: var(--tg-theme-button-color);
+            font-size: 18px; /* Slightly adjusted for balance */
+            margin: 0 2px;
+        }
+        
+        #progress-bar-container {
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.1);
+            border-radius: 25px;
+            height: 8px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        #progress-bar {
+            width: 100%;
+            height: 100%;
+            background: var(--progress-bar-color);
+            border-radius: 25px;
+            transition: width 1s linear; /* Smooth transition */
+        }
+
+        #participants-info {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: var(--tg-theme-hint-color);
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px dashed rgba(0,0,0,0.1);
+        }
+
+        #participants-info svg {
+            width: 20px;
+            height: 20px;
+            margin-left: 8px;
+            fill: var(--tg-theme-hint-color);
+        }
+        
+        #participants-info .count-value {
+            font-weight: 700;
+            color: var(--tg-theme-link-color);
+            font-size: 16px;
+        }
+        /* --- END: Animated Header Styles --- */
+
+        /* --- START: Highlighted User Styles --- */
+        #highlighted-user-container {
+            display: none; /* Hidden by default */
+            margin-bottom: 20px;
+        }
+        #highlighted-user-container .list-item {
+            background: linear-gradient(135deg, rgba(36, 129, 204, 0.2), rgba(36, 129, 204, 0.08));
+            border: 2px solid var(--tg-theme-button-color);
+            box-shadow: 0 4px 15px rgba(36, 129, 204, 0.2);
+        }
+        .highlight-title {
+            text-align: center;
+            font-weight: 500;
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: var(--tg-theme-hint-color);
+        }
+        /* --- END: Highlighted User Styles --- */
+
+        #leaderboard-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .list-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 12px;
+            border-radius: 12px;
+            background: var(--item-bg);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .rank {
+            font-size: 20px;
+            font-weight: 700;
+            width: 45px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        .medal { font-size: 28px; }
+        .user-info { flex-grow: 1; margin-right: 15px; overflow: hidden; }
+        .user-name { font-weight: 700; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .user-id { font-size: 13px; color: var(--tg-theme-hint-color); }
+        .points-container { display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1.5px solid var(--tg-theme-button-color); border-radius: 10px; padding: 4px 12px; min-width: 55px; text-align: center; flex-shrink: 0; }
+        .points-value { font-size: 18px; font-weight: 700; color: var(--tg-theme-button-color); }
+        .points-label { font-size: 10px; font-weight: 500; color: var(--tg-theme-hint-color); }
+        #pagination { display: flex; justify-content: center; align-items: center; margin-top: 25px; }
+        .nav-button { background-color: var(--tg-theme-button-color); color: var(--tg-theme-button-text-color); border: none; padding: 10px 20px; border-radius: 8px; font-family: 'Vazirmatn', sans-serif; font-size: 16px; cursor: pointer; transition: opacity 0.2s; }
+        .nav-button:disabled { opacity: 0.5; cursor: not-allowed; }
+        #page-info { margin: 0 20px; font-weight: 500; }
+        #loading, #error { text-align: center; font-size: 1.1em; padding: 50px 20px; color: var(--tg-theme-hint-color); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏆 نفرات برتر جشنواره</h1>
+
+        <div id="animated-header">
+            <div id="countdown-text">در حال محاسبه زمان...</div>
+            <div id="progress-bar-container">
+                <div id="progress-bar"></div>
+            </div>
+            <div id="participants-info">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+                <span id="participants-count-text">تعداد شرکت‌کنندگان تا این لحظه: 
+                    <span class="count-value">...</span>
+                </span>
+            </div>
+        </div>
+        
+        <div id="highlighted-user-container"></div>
+        
+        <ul id="leaderboard-list"></ul>
+        <div id="loading">... در حال بارگذاری اطلاعات ...</div>
+        <div id="error" style="display:none;"></div>
+        <div id="pagination" style="display:none;">
+            <button id="prev-btn" class="nav-button">قبلی</button>
+            <span id="page-info"></span>
+            <button id="next-btn" class="nav-button">بعدی</button>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'https://estekhraje.amiruserbot7.workers.dev/api';
+        const ITEMS_PER_PAGE = 10;
+        let currentPage = 1;
+        let totalPages = 1;
+        let allUsers = [];
+
+        function startCountdown() {
+            const nowInTehran = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Tehran' }));
+            const nextMidnight = new Date(nowInTehran);
+            nextMidnight.setDate(nextMidnight.getDate() + 1);
+            nextMidnight.setHours(0, 0, 0, 0);
+
+            const countdownEndDate = new Date(nextMidnight.getTime() + (7 * 24 * 60 * 60 * 1000));
+            const totalDuration = 7 * 24 * 60 * 60 * 1000;
+
+            const timerInterval = setInterval(function() {
+                const now = new Date();
+                const distance = countdownEndDate.getTime() - now.getTime();
+                const countdownTextElement = document.getElementById("countdown-text");
+                const progressBarElement = document.getElementById("progress-bar");
+
+                if (distance < 0) {
+                    clearInterval(timerInterval);
+                    countdownTextElement.innerHTML = `🎉 قرعه کشی بزرگ آقای مرزبان با 50 میلیون جایزه نقدی به پایان رسید! 🎉`;
+                    document.getElementById("progress-bar-container").style.display = "none";
+                    return;
                 }
-                return new Response('OK');
-            }
-            const rawBody = await request.text();
-            if (!rawBody) return new Response('OK');
-            if (env.REAL_BOT_HOST_URL) {
-                ctx.waitUntil(forwardRawBody(request, rawBody, env.REAL_BOT_HOST_URL));
-            }
-            const update = JSON.parse(rawBody);
-            const bot = new TelegramBot(env.BOT_TOKEN);
-            if (update.channel_post) {
-                await handleChannelPost(update.channel_post, env, bot);
-            } else if (update.callback_query) {
-                await handleCallbackQuery(update.callback_query, env, bot);
-            } else if (update.message) {
-                await handleMessage(update.message, env, bot);
-            }
-        } catch (e) {
-            console.error("خطای بحرانی در پردازشگر اصلی:", e.toString());
-        }
-        return new Response('OK');
-    },
-    async scheduled(controller, env, ctx) {
-        console.log("Cron Trigger: شروع به‌روزرسانی کش لیدربرد...");
-        ctx.waitUntil(updateLeaderboardCache(env));
-    }
-};
-
-async function handleUserApiRequest(request, env) {
-    const url = new URL(request.url);
-    const userId = url.pathname.split('/').pop();
-    const headers = { 'Content-Type': 'application/json;charset=UTF-8', 'Access-Control-Allow-Origin': '*' };
-
-    if (!userId || isNaN(userId)) {
-        return new Response(JSON.stringify({ error: "User ID provided is invalid." }), { status: 400, headers });
-    }
-
-    const userData = await env.CONTEST_DB.get(`user_${userId}`, { type: 'json' });
-
-    if (!userData) {
-        return new Response(JSON.stringify({ error: "User not found." }), { status: 404, headers });
-    }
-
-    const cachedLeaderboard = await env.CONTEST_DB.get('leaderboard_cache', { type: 'json' });
-    let rank = -1;
-    if (cachedLeaderboard) {
-        const userIndex = cachedLeaderboard.findIndex(u => u.id == userId);
-        if (userIndex !== -1) {
-            rank = userIndex + 1;
-        }
-    }
-
-    const responseData = {
-        id: userId,
-        username: userData.username || null,
-        first_name: userData.first_name || 'کاربر',
-        points: userData.points || 0,
-        rank: rank
-    };
-
-    return new Response(JSON.stringify(responseData), { status: 200, headers });
-}
-
-
-async function handleApiRequest(request, env) {
-    const cachedLeaderboard = await env.CONTEST_DB.get('leaderboard_cache', { type: 'json' });
-    if (!cachedLeaderboard) {
-        return new Response(JSON.stringify({ error: "لیست نفرات برتر در حال حاضر در دسترس نیست. لطفاً چند دقیقه دیگر تلاش کنید." }), {
-            status: 404,
-            headers: { 'Content-Type': 'application/json;charset=UTF-8', 'Access-Control-Allow-Origin': '*' },
-        });
-    }
-    return new Response(JSON.stringify(cachedLeaderboard), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json;charset=UTF-8', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'public, max-age=60' },
-    });
-}
-
-async function updateLeaderboardCache(env) {
-    try {
-        if (!env.CONTEST_DB) {
-            throw new Error("دیتابیس (KV Namespace) با نام CONTEST_DB به درستی متصل نشده است.");
-        }
-        let allKeys = [];
-        let listComplete = false;
-        let cursor = undefined;
-        while (!listComplete) {
-            const result = await env.CONTEST_DB.list({ limit: 1000, cursor: cursor });
-            allKeys = allKeys.concat(result.keys);
-            listComplete = result.list_complete;
-            cursor = result.cursor;
-        }
-        const promises = allKeys
-            .filter(key => key.name.startsWith('user_'))
-            .map(key =>
-                env.CONTEST_DB.get(key.name, { type: 'json' })
-                .then(value => (value && value.points > 0) ? {
-                    id: key.name.replace('user_', ''),
-                    username: value.username || null,
-                    first_name: value.first_name || `کاربر`,
-                    points: value.points || 0
-                } : null)
-                .catch(e => { console.error(`خطا در خواندن کلید ${key.name}: ${e.message}`); return null; })
-            );
-        const results = await Promise.all(promises);
-        let users = results.filter(user => user !== null);
-        users.sort((a, b) => b.points - a.points);
-        const top100 = users.slice(0, 100);
-        await env.CONTEST_DB.put('leaderboard_cache', JSON.stringify(top100));
-        console.log(`کش لیدربرد با موفقیت به‌روز شد. (${top100.length} کاربر برتر ذخیره شدند)`);
-        return { success: true, error: null };
-    } catch (e) {
-        console.error("خطای جدی در به‌روزرسانی کش لیدربرد:", e.toString());
-        return { success: false, error: e.toString() };
-    }
-}
-
-async function handleMessage(message, env, bot) {
-    const userId = message.from.id;
-    const username = message.from.username || `user_${userId}`;
-    const firstName = message.from.first_name || `کاربر`;
-    const text = message.text || '';
-    
-    let userData = await env.CONTEST_DB.get(`user_${userId}`, { type: 'json' }) || createDefaultUserData(username, firstName);
-    let dataChanged = false;
-
-    if (userData.username !== username || userData.first_name !== firstName) {
-        userData.username = username;
-        userData.first_name = firstName;
-        dataChanged = true;
-    }
-    
-    if (text === '/admin_update_cache') {
-        if (userId.toString() === env.ADMIN_USER_ID) {
-            await bot.sendMessage(userId, "⏳ در حال به‌روزرسانی دستی کش لیدربرد... لطفاً صبر کنید.");
-            const { success, error } = await updateLeaderboardCache(env);
-            if (success) {
-                await bot.sendMessage(userId, "✅ کش لیدربرد با موفقیت به‌روز شد.");
-            } else {
-                await bot.sendMessage(userId, `❌ خطا در به‌روزرسانی کش:\n\n<code>${error}</code>`);
-            }
-        } else {
-            await bot.sendMessage(userId, "شما اجازه دسترسی به این دستور را ندارید.");
-        }
-        return;
-    }
-
-    if (text === '/leaderboard') {
-        const leaderboardUrl = `https://amirrezahoseinabadi.github.io/DASH?user_id=${userId}`; 
-        const messageText = `🏆 برای مشاهده جدول کامل و به‌روز نفرات برتر، روی دکمه زیر کلیک کنید:`;
-        const keyboard = {
-            inline_keyboard: [
-                [{ text: "🚀 باز کردن جدول نفرات برتر", web_app: { url: leaderboardUrl } }]
-            ]
-        };
-        await bot.sendMessage(userId, messageText, keyboard);
-        return;
-    }
-
-    if (text.startsWith('/start')) {
-        const parts = text.split(' ');
-        const startPayload = parts.length > 1 ? parts[1] : null;
-
-        if (startPayload && startPayload == userId) {
-            const funnyMessage = "داداش داری اشتباه میزنی! چرا قیمه‌ها رو می‌ریزی تو ماست‌ها؟ 🤔\n\nنمیشه که خودت زیرمجموعه خودت بشی! این لینک رو برای دوستات بفرست.";
-            await bot.sendMessage(userId, funnyMessage);
-            const welcomeMessage = "👇 برای دریافت لینک دعوت اختصاصی خود، روی دکمه زیر کلیک کنید.";
-            const keyboard = { inline_keyboard: [ [{ text: "🔗 دریافت لینک دعوت", callback_data: "request_referral_link" }] ] };
-            await bot.sendMessage(userId, welcomeMessage, keyboard);
-        
-        } else if (startPayload === 'promo_channel') {
-                const promoMessage = "🎉 به کمپین ویژه ما از کانال خوش آمدید! 🎉\n\nبرای شرکت در قرعه‌کشی و دریافت لینک دعوت اختصاصی خود، روی دکمه زیر کلیک کنید.";
-                const keyboard = { inline_keyboard: [ [{ text: "🔗 دریافت لینک دعوت", callback_data: "request_referral_link" }] ] };
-                await bot.sendMessage(userId, promoMessage, keyboard);
-
-        } else if (startPayload && !isNaN(startPayload) && !userData.referrer_id) {
-                const referrerId = startPayload;
-                let referrerData = await env.CONTEST_DB.get(`user_${referrerId}`, { type: 'json' }) || createDefaultUserData();
                 
-                referrerData.referrals_count = (referrerData.referrals_count || 0) + 1;
-                await env.CONTEST_DB.put(`user_${referrerId}`, JSON.stringify(referrerData));
+                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+
+                countdownTextElement.innerHTML = `
+                    فقط <span class="highlight">${days} روز</span> و 
+                    <span class="highlight">${hours} ساعت</span> و 
+                    <span class="highlight">${minutes} دقیقه</span> 
+                    مانده تا قرعه کشی بزرگ آقای مرزبان با 50 میلیون جایزه نقدی برای 10 نفر
+                `;
                 
-                userData.referrer_id = referrerId;
-                dataChanged = true;
+                const progressPercentage = Math.max(0, (distance / totalDuration) * 100);
+                progressBarElement.style.width = `${progressPercentage}%`;
+            }, 1000);
+        }
+
+        function initTelegramTheme() {
+            try {
+                const tg = window.Telegram.WebApp;
+                tg.ready();
+                const theme = tg.themeParams;
+                const root = document.documentElement;
                 
-                const messageForReferrer = `👋 کاربر <b>${firstName}</b> دعوت شما را پذیرفت! پس از اولین خرید، امتیاز شما ثبت خواهد شد.`;
-                await bot.sendMessage(referrerId, messageForReferrer);
+                for (const key in theme) {
+                    if (key.endsWith('_color')) {
+                        const cssVar = `--tg-theme-${key.replace(/_/g, '-')}`;
+                        root.style.setProperty(cssVar, theme[key]);
+                    }
+                }
+                 if(theme.secondary_bg_color) {
+                    root.style.setProperty('--tg-theme-secondary-bg', theme.secondary_bg_color);
+                 } else {
+                    root.style.setProperty('--tg-theme-secondary-bg', '#f4f4f5');
+                 }
+                tg.expand();
+            } catch (e) {
+                console.warn("Telegram WebApp script not found. Using default theme.");
+                document.documentElement.style.setProperty('--tg-theme-secondary-bg', '#f4f4f5');
+            }
+        }
+
+        async function fetchAndDisplayHighlightedUser(userId) {
+            const container = document.getElementById('highlighted-user-container');
+            try {
+                const response = await fetch(`${API_BASE_URL}/user/${userId}`);
+                if (!response.ok) return; // Fail silently if user not found or error
+
+                const user = await response.json();
                 
-                const messageForNewbie = `☀️ خوش آمدید! ☀️\n\nشما توسط <b>${referrerData.first_name || 'دوستتان'}</b> دعوت شده‌اید! برای شروع، روی دکمه زیر کلیک کنید.`;
-                const keyboard = { inline_keyboard: [ [{ text: "🔗 دریافت لینک دعوت", callback_data: "request_referral_link" }] ] };
-                await bot.sendMessage(userId, messageForNewbie, keyboard);
+                let rankContent;
+                if (user.rank > 0) {
+                    if (user.rank === 1) { rankContent = '<span class="medal">🥇</span>'; }
+                    else if (user.rank === 2) { rankContent = '<span class="medal">🥈</span>'; }
+                    else if (user.rank === 3) { rankContent = '<span class="medal">🥉</span>'; }
+                    else { rankContent = user.rank; }
+                } else {
+                    rankContent = '...'; // Rank not in top 100
+                }
+
+                const usernameDisplay = user.username ? `@...${user.username.slice(-4)}` : `ID: ...${String(user.id).slice(-4)}`;
+
+                container.innerHTML = `
+                    <div class="highlight-title">امتیاز کاربر میزبان</div>
+                    <div class="list-item">
+                        <div class="rank">${rankContent}</div>
+                        <div class="user-info">
+                            <div class="user-name">${user.first_name}</div>
+                            <div class="user-id">${usernameDisplay}</div>
+                        </div>
+                        <div class="points-container">
+                            <span class="points-value">${user.points}</span>
+                            <span class="points-label">امتیاز</span>
+                        </div>
+                    </div>
+                `;
+                container.style.display = 'block';
+
+            } catch (e) {
+                console.error("Failed to fetch highlighted user", e);
+                container.style.display = 'none';
+            }
+        }
+
+        function renderPage(page) {
+            const listElement = document.getElementById('leaderboard-list');
+            listElement.innerHTML = '';
             
+            const start = (page - 1) * ITEMS_PER_PAGE;
+            const end = start + ITEMS_PER_PAGE;
+            const pageUsers = allUsers.slice(start, end);
+
+            pageUsers.forEach((user, index) => {
+                const overallRank = start + index + 1;
+                let rankContent;
+                let liClass = 'list-item';
+
+                if (overallRank === 1) { rankContent = '<span class="medal">🥇</span>';} 
+                else if (overallRank === 2) { rankContent = '<span class="medal">🥈</span>';} 
+                else if (overallRank === 3) { rankContent = '<span class="medal">🥉</span>';} 
+                else { rankContent = overallRank; }
+                
+                const usernameDisplay = user.username ? `@...${user.username.slice(-4)}` : `ID: ...${String(user.id).slice(-4)}`;
+
+                const listItem = document.createElement('li');
+                listItem.className = liClass;
+                
+                listItem.innerHTML = `
+                    <div class="rank">${rankContent}</div>
+                    <div class="user-info">
+                        <div class="user-name">${user.first_name}</div>
+                        <div class="user-id">${usernameDisplay}</div>
+                    </div>
+                    <div class="points-container">
+                        <span class="points-value">${user.points}</span>
+                        <span class="points-label">امتیاز</span>
+                    </div>
+                `;
+                listElement.appendChild(listItem);
+            });
+            
+            document.getElementById('page-info').textContent = `صفحه ${currentPage} از ${totalPages}`;
+            document.getElementById('prev-btn').disabled = currentPage === 1;
+            document.getElementById('next-btn').disabled = currentPage === totalPages;
         }
-    
-    } else if (text === '/mypoints') {
-        await sendMyPointsMessage(userId, env, bot);
-    }
-    
-    if (dataChanged) {
-        await env.CONTEST_DB.put(`user_${userId}`, JSON.stringify(userData));
-    }
-}
 
-async function handleChannelPost(post, env, bot) { 
-    if (!post || !post.chat || !post.chat.id) return; 
-    const receivedChannelId = post.chat.id.toString(); 
-    const expectedChannelId = env.REPORT_CHANNEL_ID ? env.REPORT_CHANNEL_ID.trim() : null; 
-    if (receivedChannelId !== expectedChannelId) return; 
-    const messageText = post.text || ''; 
-    if (messageText.includes('#سفارش_جدید') || messageText.includes('#خدمات_ساب')) { 
-        const buyerId = parseUserId(messageText); 
-        if (!buyerId) return; 
-        let buyerData = await env.CONTEST_DB.get(`user_${buyerId}`, { type: 'json' }) || createDefaultUserData(); 
-        let pointsEarned = 1; 
-        if (!buyerData.first_purchase_done && buyerData.referrer_id) { 
-            pointsEarned += 3; 
-            const referrerId = buyerData.referrer_id; 
-            let referrerData = await env.CONTEST_DB.get(`user_${referrerId}`, { type: 'json' }) || createDefaultUserData(); 
-            referrerData.points = (referrerData.points || 0) + 3; 
-            referrerData.referrals_who_purchased_count = (referrerData.referrals_who_purchased_count || 0) + 1; 
-            await env.CONTEST_DB.put(`user_${referrerId}`, JSON.stringify(referrerData)); 
-            const buyerUsername = parseUsername(messageText); 
-            const buyerDisplayUsername = buyerUsername ? `@${buyerUsername}` : `کاربر ${buyerId}`; 
-            const messageForReferrer = `🎁 تبریک! کاربری که دعوت کرده بودید (${buyerDisplayUsername}) اولین خرید خود را انجام داد و <b>۳ امتیاز</b> به شما اضافه شد!\n/mypoints`; 
-            await bot.sendMessage(referrerId, messageForReferrer); 
-        } 
-        buyerData.points = (buyerData.points || 0) + pointsEarned; 
-        buyerData.first_purchase_done = true; 
-        const username = parseUsername(messageText); 
-        if (username) buyerData.username = username; 
-        await env.CONTEST_DB.put(`user_${buyerId}`, JSON.stringify(buyerData)); 
-        const keyboard = { inline_keyboard: [ [{ text: "📊 مشاهده آمار امتیازات", callback_data: "show_mypoints" }] ] }; 
-        const confirmationMessage = `✅ خرید شما با موفقیت ثبت شد و <b>${pointsEarned} امتیاز</b> دریافت کردید!\n\nمجموع امتیازات: <b>${buyerData.points}</b>`; 
-        await bot.sendMessage(buyerId, confirmationMessage, keyboard); 
-    } 
-}
+        async function fetchLeaderboard() {
+            const loadingElement = document.getElementById('loading');
+            const errorElement = document.getElementById('error');
+            const paginationElement = document.getElementById('pagination');
+            const participantsCountElement = document.querySelector('#participants-info .count-value');
 
-async function handleCallbackQuery(callbackQuery, env, bot) { 
-    const userId = callbackQuery.from.id; 
-    const username = callbackQuery.from.username || `user_${userId}`; 
-    const firstName = callbackQuery.from.first_name || 'کاربر'; 
-    if (callbackQuery.data === 'request_referral_link') { 
-        let userData = await env.CONTEST_DB.get(`user_${userId}`, { type: 'json' }) || createDefaultUserData(username, firstName); 
-        if (!userData.referral_link) { 
-            userData.referral_link = `https://t.me/${env.BOT_USERNAME}?start=${userId}`; 
-        } 
-        userData.username = username; 
-        userData.first_name = firstName; 
-        await env.CONTEST_DB.put(`user_${userId}`, JSON.stringify(userData)); 
+            try {
+                const response = await fetch(`${API_BASE_URL}/leaderboard`);
+                if (!response.ok) throw new Error('خطا در دریافت اطلاعات');
+                allUsers = await response.json();
 
-        const bannerText = `<b>☁️ - آقای مرزبان : پنل ساز خودکار</b>
+                if (allUsers.length === 0) {
+                    loadingElement.textContent = 'هنوز هیچ شرکت‌کننده‌ای امتیازی کسب نکرده است.';
+                    participantsCountElement.textContent = '0';
+                    return;
+                }
+                
+                totalPages = Math.ceil(allUsers.length / ITEMS_PER_PAGE);
+                renderPage(currentPage);
+                
+                loadingElement.style.display = 'none';
+                paginationElement.style.display = 'flex';
+                participantsCountElement.textContent = allUsers.length;
 
-<i>جامع ترین ربات و اولین پنل ساز هوشمند تحت تلگرام که سعی می‌کند کاهش چشمگیر هزینه هارا برای فروشندگان تجاری و مصارف خانگی به ارمغان بیاورد.</i>
-<blockquote>♾️ - <b>امکانات فوق حرفه ای</b>
-🚩 - شروع قیمت از 375 تومان 
-🔵 - ریستارت پنل مرزبان با یک کلیک
-⚡️ - خاموش/روشن کردن تمام اشتراک ها
-🌐 - آپ تایم  99% درصدی
-🔥 - دیتاسنتر : آلمان-فنلاند-انگلیس-فرانسه
-♻️ - بدون نیاز به سرور خارج/ایران
-👤 - پشتیبانی فعال و 24 ساعته
-🔐 - تغییر پسورد ورود به پنل مرزبان
-🏷 - بدون احراز هویت و دردسر</blockquote>
-🆕 <b>تست رایگان :</b> یک پنل مرزبان با 15 گیگابایت ترافیک رایگان و انقضا نامحدود از ربات ما دریافت کرده و استفاده کنید. فرصت را از  دست ندهید و همین حالا اقدام کنید... 
-
-📣 - @MarzbanMR
-📞 - @MarzbanMRBot`;
-
-        const keyboard = {
-            inline_keyboard: [
-                [{ text: "🔷 استارت ربات 🔷", url: userData.referral_link }]
-            ]
-        };
-
-        await bot.sendMessage(userId, bannerText, keyboard);
+            } catch (error) {
+                loadingElement.style.display = 'none';
+                errorElement.textContent = error.message;
+                errorElement.style.display = 'block';
+                participantsCountElement.textContent = 'خطا';
+            }
+        }
         
-        const linkMessage = `دکمه شیشه ای بالا مجهز به لینک اختصاصی شماست اما با این حال🎉 لینک دعوت اختصاصی شما:
+        async function handleUrlParameters() {
+            try {
+                const params = new URLSearchParams(window.location.search);
+                const userId = params.get('user_id');
+                if (userId) {
+                    await fetchAndDisplayHighlightedUser(userId);
+                }
+            } catch (e) {
+                console.error("Error processing URL parameters:", e);
+            }
+        }
 
-<code>${userData.referral_link}</code>
+        document.addEventListener('DOMContentLoaded', () => {
+            initTelegramTheme();
+            handleUrlParameters();
+            fetchLeaderboard();
+            startCountdown();
 
-<i>روی لینک بالا کلیک کنید تا کپی شود</i>`;
+            document.getElementById('prev-btn').addEventListener('click', () => {
+                if (currentPage > 1) { currentPage--; renderPage(currentPage); }
+            });
 
-        await bot.sendMessage(userId, linkMessage);
-
-
-    } else if (callbackQuery.data === 'show_mypoints') { 
-        await sendMyPointsMessage(userId, env, bot); 
-    } 
-    await bot.answerCallbackQuery(callbackQuery.id); 
-}
-
-async function sendMyPointsMessage(userId, env, bot) {
-    const userData = await env.CONTEST_DB.get(`user_${userId}`, { type: 'json' }) || createDefaultUserData();
-    const points = userData.points || 0;
-    const referrals = userData.referrals_count || 0;
-    const purchased_referrals = userData.referrals_who_purchased_count || 0;
-    
-    const leaderboardBaseUrl = "https://amirrezahoseinabadi.github.io/DASH";
-    const webAppUrl = `${leaderboardBaseUrl}?user_id=${userId}`;
-    const shareText = encodeURIComponent("امتیاز من در جشنواره بزرگ آقای مرزبان رو ببین! تو هم می‌تونی برنده باشی 🔥");
-    const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(webAppUrl)}&text=${shareText}`;
-
-    const keyboard = {
-        inline_keyboard: [
-            [{ text: "🏆 مشاهده جدول نفرات برتر", web_app: { url: webAppUrl } }],
-            [{ text: "🚀 اشتراک‌گذاری امتیاز من", url: shareUrl }]
-        ]
-    };
-    const messageText = `📊 <b>آمار شما در جشنواره</b>:\n\n- 💰 امتیازات: <b>${points}</b>\n- 👥 دعوت‌ها: <b>${referrals}</b>\n- ✅ دعوت‌های موفق: <b>${purchased_referrals}</b>`;
-    await bot.sendMessage(userId, messageText, keyboard);
-}
-
-
-function createDefaultUserData(username = '', firstName = '') { 
-    return { points: 0, username: username, first_name: firstName, referral_link: '', referrer_id: null, first_purchase_done: false, referrals_count: 0, referrals_who_purchased_count: 0 }; 
-}
-
-async function forwardRawBody(originalRequest, rawBody, hostUrl) { 
-    try { 
-        await fetch(hostUrl, { method: originalRequest.method, headers: originalRequest.headers, body: rawBody, }); 
-    } catch (e) { 
-        console.error("خطا در فوروارد:", e.toString()); 
-    } 
-}
-
-class TelegramBot { 
-    constructor(token) { 
-        this.token = token; 
-        this.apiUrl = `https://api.telegram.org/bot${token}`; 
-    } 
-    async sendMessage(chatId, text, replyMarkup = null) { 
-        const payload = { chat_id: chatId, text: text, parse_mode: 'HTML' }; 
-        if (replyMarkup) { 
-            payload.reply_markup = replyMarkup; 
-        } 
-        await fetch(`${this.apiUrl}/sendMessage`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), }); 
-    } 
-    async answerCallbackQuery(callbackQueryId) { 
-        await fetch(`${this.apiUrl}/answerCallbackQuery`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ callback_query_id: callbackQueryId }), }); 
-    } 
-}
-
-function parseUserId(text) { 
-    const match = text.match(/(?:id|ایدی عددی فرد)\s*:\s*(\d+)/); 
-    return match ? match[1] : null; 
-}
-
-function parseUsername(text) { 
-    const match = text.match(/آیدی فرد\s*:\s*@(\w+)/); 
-    return match ? match[1] : null; 
-}
+            document.getElementById('next-btn').addEventListener('click', () => {
+                if (currentPage < totalPages) { currentPage++; renderPage(currentPage); }
+            });
+        });
+    </script>
+</body>
+</html>

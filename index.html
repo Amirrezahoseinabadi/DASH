@@ -3,185 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>داشبورد مدیریت مشتریان</title>
+    <title>🏆 نفرات برتر جشنواره تابستانی</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap');
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f4f7f6;
+            font-family: 'Vazirmatn', sans-serif;
+            background-color: #f0f2f5;
             color: #333;
             margin: 0;
             padding: 20px;
+            display: flex;
+            justify-content: center;
         }
         .container {
-            max-width: 1200px;
-            margin: 0 auto;
+            max-width: 600px;
+            width: 100%;
             background-color: #fff;
-            padding: 20px 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            padding: 25px;
         }
-        h1 { color: #2c3e50; text-align: center; margin-bottom: 20px; }
-        .search-box { display: flex; gap: 10px; margin-bottom: 20px; align-items: center; }
-        .search-box input { flex-grow: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; }
-        .search-box button { padding: 10px 20px; border: none; background-color: #3498db; color: white; border-radius: 4px; cursor: pointer; font-size: 16px; transition: background-color 0.3s; }
-        .search-box button:hover { background-color: #2980b9; }
-        #fetchAllButton { background-color: #2ecc71; }
-        #fetchAllButton:hover { background-color: #27ae60; }
-        #loadingMessage { text-align: center; color: #777; font-style: italic; padding: 20px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 12px 15px; text-align: right; border-bottom: 1px solid #ddd; }
-        thead th { background-color: #ecf0f1; color: #34495e; font-weight: 600; }
-        tbody tr:nth-of-type(even) { background-color: #f9f9f9; }
-        tbody tr:hover { background-color: #f1f1f1; }
+        h1 {
+            text-align: center;
+            color: #1a73e8;
+            border-bottom: 2px solid #1a73e8;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        #leaderboard-list {
+            list-style: none;
+            padding: 0;
+        }
+        .list-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 10px;
+            border-bottom: 1px solid #eee;
+            transition: background-color 0.2s ease-in-out;
+        }
+        .list-item:last-child {
+            border-bottom: none;
+        }
+        .list-item:hover {
+            background-color: #f9f9f9;
+        }
+        .rank {
+            font-size: 1.2em;
+            font-weight: bold;
+            width: 50px;
+            text-align: center;
+        }
+        .username {
+            flex-grow: 1;
+            font-size: 1.1em;
+        }
+        .points {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #28a745;
+            background-color: #e9f5ec;
+            padding: 5px 12px;
+            border-radius: 20px;
+        }
+        #loading, #error {
+            text-align: center;
+            font-size: 1.2em;
+            padding: 40px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #888;
+            font-size: 0.9em;
+        }
+        .footer a {
+            color: #1a73e8;
+            text-decoration: none;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>داشبورد مدیریت مشتریان</h1>
-        <div class="search-box">
-            <input type="text" id="searchInput" placeholder="جستجو بر اساس ID عددی مشتری...">
-            <button id="searchButton">جستجو</button>
-            <button id="fetchAllButton">نمایش همه</button>
+        <h1>🏆 نفرات برتر جشنواره</h1>
+        <ul id="leaderboard-list">
+            <!-- Data will be inserted here by JavaScript -->
+        </ul>
+        <div id="loading">... در حال بارگذاری اطلاعات ...</div>
+        <div id="error" style="display:none;"></div>
+        <div class="footer">
+            <p>این لیست هر ۵ دقیقه یک بار به‌روز می‌شود.</p>
+            <p>ارائه شده توسط <a href="https://t.me/YourBotLink" target="_blank">ربات شما</a></p>
         </div>
-        <p id="loadingMessage">در حال بارگذاری اطلاعات از سرور...</p>
-        <table id="customerTable">
-            <thead>
-                <tr>
-                    <th>ID مشتری</th>
-                    <th>شماره تماس</th>
-                    <th>تعداد پنل</th>
-                    <th>ترافیک کل (GB)</th>
-                    <th>تاریخ ثبت‌نام</th>
-                    <th>اولین پیام</th>
-                </tr>
-            </thead>
-            <tbody id="tableBody"></tbody>
-        </table>
     </div>
+
     <script>
-        // --- توابع کمکی برای تاریخ ---
+        // ! این آدرس را باید به آدرس کامل ورکر خود تغییر دهید
+        const API_URL = 'https://estekhraje.amiruserbot7.workers.dev/api/leaderboard';
 
-        function gregorianToJalali(gy, gm, gd) {
-            var g_d_m = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
-            var gy2 = (gm > 2) ? (gy + 1) : gy;
-            var days = 355666 + (365 * gy) + ~~((gy2 + 3) / 4) - ~~((gy2 + 99) / 100) + ~~((gy2 + 399) / 400) + gd + g_d_m[gm - 1];
-            var jy = -1595 + (33 * ~~(days / 12053));
-            days %= 12053;
-            jy += 4 * ~~(days / 1461);
-            days %= 1461;
-            if (days > 365) {
-                jy += ~~((days - 1) / 365);
-                days = (days - 1) % 365;
+        async function fetchLeaderboard() {
+            const listElement = document.getElementById('leaderboard-list');
+            const loadingElement = document.getElementById('loading');
+            const errorElement = document.getElementById('error');
+
+            try {
+                const response = await fetch(API_URL);
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.error || 'خطا در دریافت اطلاعات');
+                }
+                const users = await response.json();
+
+                listElement.innerHTML = ''; // Clear previous list
+
+                if (users.length === 0) {
+                     listElement.innerHTML = '<li class="list-item" style="justify-content:center;">هنوز هیچ شرکت‌کننده‌ای امتیازی کسب نکرده است.</li>';
+                } else {
+                    users.forEach((user, index) => {
+                        const medals = ["🥇", "🥈", "🥉"];
+                        const rank = index < 3 ? medals[index] : index + 1;
+                        const isActualUsername = user.username && user.username !== 'کاربر ناشناس' && !user.username.startsWith('user_');
+                        const usernameDisplay = isActualUsername ? `@${user.username}` : `کاربر ${user.id}`;
+                        
+                        const listItem = document.createElement('li');
+                        listItem.className = 'list-item';
+                        listItem.innerHTML = `
+                            <span class="rank">${rank}</span>
+                            <span class="username">${usernameDisplay}</span>
+                            <span class="points">${user.points} امتیاز</span>
+                        `;
+                        listElement.appendChild(listItem);
+                    });
+                }
+
+                loadingElement.style.display = 'none';
+
+            } catch (error) {
+                loadingElement.style.display = 'none';
+                errorElement.textContent = error.message;
+                errorElement.style.display = 'block';
             }
-            var jm = (days < 186) ? 1 + ~~(days / 31) : 7 + ~~((days - 186) / 30);
-            var jd = 1 + ((days < 186) ? (days % 31) : ((days - 186) % 30));
-            return [jy, jm, jd];
         }
 
-        function formatShamsiDate(isoString) {
-            if (!isoString) return '---';
-            const date = new Date(isoString);
-            const [year, month, day] = [date.getUTCFullYear(), date.getUTCMonth() + 1, date.getUTCDate()];
-            const [jy, jm, jd] = gregorianToJalali(year, month, day);
-
-            const hours = String(date.getUTCHours()).padStart(2, '0');
-            const minutes = String(date.getUTCMinutes()).padStart(2, '0');
-            const seconds = String(date.getUTCSeconds()).padStart(2, '0');
-
-            const formattedDate = `${jy}/${String(jm).padStart(2, '0')}/${String(jd).padStart(2, '0')}`;
-            const formattedTime = `${hours}:${minutes}:${seconds}`;
-
-            return `${formattedDate} در ساعت ${formattedTime}`;
-        }
-
-        // --- تابع extractPhoneNumber حذف شد چون دیگر لازم نیست ---
-
-        document.addEventListener('DOMContentLoaded', function() {
-            const tableBody = document.getElementById('tableBody');
-            const loadingMessage = document.getElementById('loadingMessage');
-            const searchInput = document.getElementById('searchInput');
-            const searchButton = document.getElementById('searchButton');
-            const fetchAllButton = document.getElementById('fetchAllButton');
-            
-            const API_BASE_URL = 'https://marzban-dns.mooo.com';
-
-            function displayData(customers) {
-                tableBody.innerHTML = '';
-                if (!customers || customers.length === 0) {
-                    loadingMessage.innerText = 'داده‌ای برای نمایش یافت نشد.';
-                    loadingMessage.style.display = 'block';
-                    return;
-                }
-                customers.forEach(customer => {
-                    const row = document.createElement('tr');
-                    
-                    const shamsiRegistrationDate = formatShamsiDate(customer.registration_date);
-                    const shamsiFirstMessageDate = formatShamsiDate(customer.first_message_date);
-                    
-                    // --- تغییر کلیدی: حالا مستقیماً از فیلد phone_number می‌خوانیم ---
-                    const phoneNumber = customer.phone_number || '---';
-
-                    row.innerHTML = `
-                        <td>${customer.customer_id || '---'}</td>
-                        <td>${phoneNumber}</td>
-                        <td>${customer.total_panels || 0}</td>
-                        <td>${customer.total_traffic_gb || 0}</td>
-                        <td>${shamsiRegistrationDate}</td>
-                        <td>${shamsiFirstMessageDate}</td>
-                    `;
-                    tableBody.appendChild(row);
-                });
-                loadingMessage.style.display = 'none';
-            }
-
-            async function fetchAllCustomers() {
-                loadingMessage.innerText = 'در حال بارگذاری تمام مشتریان...';
-                loadingMessage.style.display = 'block';
-                tableBody.innerHTML = '';
-                try {
-                    const response = await fetch(`${API_BASE_URL}/api/customers`);
-                    if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-                    const data = await response.json();
-                    displayData(data);
-                } catch (error) {
-                    console.error('Fetch error:', error);
-                    loadingMessage.innerText = 'خطا در بارگذاری اطلاعات. لطفاً از فعال بودن سرور و درستی آدرس API مطمئن شوید.';
-                }
-            }
-
-            async function searchCustomer() {
-                const customerId = searchInput.value.trim();
-                if (!customerId || !/^\d+$/.test(customerId)) {
-                    alert('لطفاً یک ID عددی معتبر وارد کنید.');
-                    return;
-                }
-                loadingMessage.innerText = `در حال جستجو برای ID ${customerId}...`;
-                loadingMessage.style.display = 'block';
-                tableBody.innerHTML = '';
-                try {
-                    const response = await fetch(`${API_BASE_URL}/api/customer/${customerId}`);
-                    if (response.status === 404) {
-                        loadingMessage.innerText = `مشتری با ID ${customerId} یافت نشد.`;
-                        return;
-                    }
-                    if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-                    const data = await response.json();
-                    displayData([data]);
-                } catch (error) {
-                    console.error('Search error:', error);
-                    loadingMessage.innerText = 'خطا در انجام جستجو.';
-                }
-            }
-
-            fetchAllButton.addEventListener('click', fetchAllCustomers);
-            searchButton.addEventListener('click', searchCustomer);
-            searchInput.addEventListener('keyup', event => {
-                if (event.key === 'Enter') searchCustomer();
-            });
-
-            fetchAllCustomers();
-        });
+        fetchLeaderboard();
     </script>
 </body>
 </html>
-

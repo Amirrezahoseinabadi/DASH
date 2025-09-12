@@ -2,140 +2,269 @@
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🏆 نفرات برتر جشنواره تابستانی</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>🏆 نفرات برتر جشنواره</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700&display=swap');
+        
+        :root {
+            --tg-theme-bg-color: #ffffff;
+            --tg-theme-text-color: #000000;
+            --tg-theme-hint-color: #999999;
+            --tg-theme-link-color: #2481cc;
+            --tg-theme-button-color: #2481cc;
+            --tg-theme-button-text-color: #ffffff;
+            --tg-theme-secondary-bg-color: #f4f4f5;
+            --top-user-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0));
+            --top-user-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
+            --item-bg: rgba(255, 255, 255, 0.6);
+            --gold-color: #FFD700;
+            --silver-color: #C0C0C0;
+            --bronze-color: #CD7F32;
+        }
+
         body {
             font-family: 'Vazirmatn', sans-serif;
-            background-color: #f0f2f5;
-            color: #333;
             margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
+            padding: 15px;
+            background-color: var(--tg-theme-secondary-bg-color);
+            color: var(--tg-theme-text-color);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            overscroll-behavior-y: none;
         }
+
         .container {
-            max-width: 600px;
-            width: 100%;
-            background-color: #fff;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            padding: 25px;
+            max-width: 100%;
+            margin: 0 auto;
         }
+
         h1 {
             text-align: center;
-            color: #1a73e8;
-            border-bottom: 2px solid #1a73e8;
-            padding-bottom: 10px;
+            color: var(--tg-theme-text-color);
+            font-size: 24px;
             margin-bottom: 20px;
         }
+
         #leaderboard-list {
             list-style: none;
             padding: 0;
         }
+
         .list-item {
             display: flex;
             align-items: center;
-            padding: 15px 10px;
-            border-bottom: 1px solid #eee;
-            transition: background-color 0.2s ease-in-out;
+            margin-bottom: 10px;
+            padding: 12px;
+            border-radius: 12px;
+            background: var(--item-bg);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
-        .list-item:last-child {
-            border-bottom: none;
-        }
+
         .list-item:hover {
-            background-color: #f9f9f9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
         }
+        
+        .list-item.top-3 {
+            background: var(--top-user-bg);
+            box-shadow: var(--top-user-shadow);
+            border: 1px solid;
+        }
+
+        .list-item.gold { border-color: var(--gold-color); }
+        .list-item.silver { border-color: var(--silver-color); }
+        .list-item.bronze { border-color: var(--bronze-color); }
+
         .rank {
-            font-size: 1.2em;
-            font-weight: bold;
-            width: 50px;
+            font-size: 20px;
+            font-weight: 700;
+            width: 45px;
             text-align: center;
+            flex-shrink: 0;
+            position: relative;
         }
-        .username {
+        
+        .medal {
+            font-size: 28px;
+            animation: bounce 2s infinite ease-in-out;
+        }
+        
+        .list-item.silver .medal { animation-delay: 0.2s; }
+        .list-item.bronze .medal { animation-delay: 0.4s; }
+
+        .user-info {
             flex-grow: 1;
-            font-size: 1.1em;
+            margin-right: 15px;
+            overflow: hidden;
         }
+
+        .user-name {
+            font-weight: 700;
+            font-size: 16px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .user-id {
+            font-size: 13px;
+            color: var(--tg-theme-hint-color);
+        }
+
         .points {
-            font-size: 1.1em;
-            font-weight: bold;
-            color: #28a745;
-            background-color: #e9f5ec;
-            padding: 5px 12px;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--tg-theme-button-color);
+            background-color: var(--tg-theme-secondary-bg-color);
+            padding: 6px 14px;
             border-radius: 20px;
+            flex-shrink: 0;
         }
+
+        #pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 25px;
+        }
+
+        .nav-button {
+            background-color: var(--tg-theme-button-color);
+            color: var(--tg-theme-button-text-color);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-family: 'Vazirmatn', sans-serif;
+            font-size: 16px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .nav-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        #page-info {
+            margin: 0 20px;
+            font-weight: 500;
+        }
+
         #loading, #error {
             text-align: center;
-            font-size: 1.2em;
-            padding: 40px;
+            font-size: 1.1em;
+            padding: 50px 20px;
+            color: var(--tg-theme-hint-color);
         }
-        .footer {
-            text-align: center;
-            margin-top: 20px;
-            color: #888;
-            font-size: 0.9em;
-        }
-        .footer a {
-            color: #1a73e8;
-            text-decoration: none;
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-8px); }
+            60% { transform: translateY(-4px); }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>🏆 نفرات برتر جشنواره</h1>
-        <ul id="leaderboard-list">
-            <!-- Data will be inserted here by JavaScript -->
-        </ul>
+        <ul id="leaderboard-list"></ul>
         <div id="loading">... در حال بارگذاری اطلاعات ...</div>
         <div id="error" style="display:none;"></div>
-        <div class="footer">
-            <p>این لیست هر ۵ دقیقه یک بار به‌روز می‌شود.</p>
-            <p>ارائه شده توسط <a href="https://t.me/YourBotLink" target="_blank">ربات شما</a></p>
+        <div id="pagination" style="display:none;">
+            <button id="prev-btn" class="nav-button">قبلی</button>
+            <span id="page-info"></span>
+            <button id="next-btn" class="nav-button">بعدی</button>
         </div>
     </div>
 
     <script>
-        // ! این آدرس را باید به آدرس کامل ورکر خود تغییر دهید
         const API_URL = 'https://estekhraje.amiruserbot7.workers.dev/api/leaderboard';
+        const ITEMS_PER_PAGE = 10;
+        let currentPage = 1;
+        let totalPages = 1;
+        let allUsers = [];
+
+        function initTelegramTheme() {
+            const tg = window.Telegram.WebApp;
+            tg.ready();
+            const theme = tg.themeParams;
+            const root = document.documentElement;
+            
+            // Set CSS variables from Telegram theme
+            for (const key in theme) {
+                if (key.endsWith('_color')) {
+                    const cssVar = `--tg-theme-${key.replace(/_/g, '-')}`;
+                    root.style.setProperty(cssVar, theme[key]);
+                }
+            }
+            tg.expand();
+        }
+
+        function renderPage(page) {
+            const listElement = document.getElementById('leaderboard-list');
+            listElement.innerHTML = '';
+            
+            const start = (page - 1) * ITEMS_PER_PAGE;
+            const end = start + ITEMS_PER_PAGE;
+            const pageUsers = allUsers.slice(start, end);
+
+            pageUsers.forEach((user, index) => {
+                const overallRank = start + index + 1;
+                let rankContent;
+                let liClass = 'list-item';
+
+                if (overallRank === 1) { rankContent = '<span class="medal">🥇</span>'; liClass += ' top-3 gold'; } 
+                else if (overallRank === 2) { rankContent = '<span class="medal">🥈</span>'; liClass += ' top-3 silver'; } 
+                else if (overallRank === 3) { rankContent = '<span class="medal">🥉</span>'; liClass += ' top-3 bronze'; } 
+                else { rankContent = overallRank; }
+                
+                const usernameDisplay = user.username ? `@${user.username}` : `کاربر ${user.id}`;
+
+                const listItem = document.createElement('li');
+                listItem.className = liClass;
+                listItem.innerHTML = `
+                    <div class="rank">${rankContent}</div>
+                    <div class="user-info">
+                        <div class="user-name">${user.first_name}</div>
+                        <div class="user-id">${usernameDisplay}</div>
+                    </div>
+                    <div class="points">${user.points}</div>
+                `;
+                listElement.appendChild(listItem);
+            });
+            
+            document.getElementById('page-info').textContent = `صفحه ${currentPage} از ${totalPages}`;
+            document.getElementById('prev-btn').disabled = currentPage === 1;
+            document.getElementById('next-btn').disabled = currentPage === totalPages;
+        }
 
         async function fetchLeaderboard() {
-            const listElement = document.getElementById('leaderboard-list');
             const loadingElement = document.getElementById('loading');
             const errorElement = document.getElementById('error');
+            const paginationElement = document.getElementById('pagination');
 
             try {
                 const response = await fetch(API_URL);
                 if (!response.ok) {
-                    const errData = await response.json();
-                    throw new Error(errData.error || 'خطا در دریافت اطلاعات');
+                    throw new Error((await response.json()).error || 'خطا در دریافت اطلاعات');
                 }
-                const users = await response.json();
+                allUsers = await response.json();
 
-                listElement.innerHTML = ''; // Clear previous list
-
-                if (users.length === 0) {
-                     listElement.innerHTML = '<li class="list-item" style="justify-content:center;">هنوز هیچ شرکت‌کننده‌ای امتیازی کسب نکرده است.</li>';
-                } else {
-                    users.forEach((user, index) => {
-                        const medals = ["🥇", "🥈", "🥉"];
-                        const rank = index < 3 ? medals[index] : index + 1;
-                        const isActualUsername = user.username && user.username !== 'کاربر ناشناس' && !user.username.startsWith('user_');
-                        const usernameDisplay = isActualUsername ? `@${user.username}` : `کاربر ${user.id}`;
-                        
-                        const listItem = document.createElement('li');
-                        listItem.className = 'list-item';
-                        listItem.innerHTML = `
-                            <span class="rank">${rank}</span>
-                            <span class="username">${usernameDisplay}</span>
-                            <span class="points">${user.points} امتیاز</span>
-                        `;
-                        listElement.appendChild(listItem);
-                    });
+                if (allUsers.length === 0) {
+                    loadingElement.textContent = 'هنوز هیچ شرکت‌کننده‌ای امتیازی کسب نکرده است.';
+                    return;
                 }
-
+                
+                totalPages = Math.ceil(allUsers.length / ITEMS_PER_PAGE);
+                renderPage(currentPage);
+                
                 loadingElement.style.display = 'none';
+                paginationElement.style.display = 'flex';
 
             } catch (error) {
                 loadingElement.style.display = 'none';
@@ -144,7 +273,28 @@
             }
         }
 
+        document.getElementById('prev-btn').addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                renderPage(currentPage);
+            }
+        });
+
+        document.getElementById('next-btn').addEventListener('click', () => {
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderPage(currentPage);
+            }
+        });
+        
+        try {
+            initTelegramTheme();
+        } catch (e) {
+            console.warn("Telegram WebApp script not found. Using default theme.");
+        }
         fetchLeaderboard();
+
     </script>
 </body>
 </html>
+

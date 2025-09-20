@@ -46,7 +46,6 @@
             margin-bottom: 20px;
         }
 
-        /* --- START: Animated Header Styles --- */
         #animated-header {
             background: rgba(255, 255, 255, 0.35);
             backdrop-filter: blur(10px);
@@ -57,9 +56,9 @@
             padding: 20px;
             margin-bottom: 25px;
             text-align: center;
-            opacity: 0; /* Start hidden */
-            transform: translateY(-50px); /* Start off-screen */
-            animation: slideIn 1s ease-out 0.5s forwards; /* Animation */
+            opacity: 0;
+            transform: translateY(-50px);
+            animation: slideIn 1s ease-out 0.5s forwards;
         }
 
         @keyframes slideIn {
@@ -70,7 +69,7 @@
         }
 
         #countdown-text {
-            font-size: 15px; /* Font size reduced for better look */
+            font-size: 15px;
             font-weight: 500;
             color: var(--tg-theme-text-color);
             line-height: 1.7;
@@ -80,7 +79,7 @@
         #countdown-text .highlight {
             font-weight: 900;
             color: var(--tg-theme-button-color);
-            font-size: 18px; /* Slightly adjusted for balance */
+            font-size: 18px;
             margin: 0 2px;
         }
         
@@ -98,7 +97,7 @@
             height: 100%;
             background: var(--progress-bar-color);
             border-radius: 25px;
-            transition: width 1s linear; /* Smooth transition */
+            transition: width 1s linear;
         }
 
         #participants-info {
@@ -124,11 +123,9 @@
             color: var(--tg-theme-link-color);
             font-size: 16px;
         }
-        /* --- END: Animated Header Styles --- */
 
-        /* --- START: Highlighted User Styles --- */
         #highlighted-user-container {
-            display: none; /* Hidden by default */
+            display: none;
             margin-bottom: 20px;
         }
         #highlighted-user-container .list-item {
@@ -143,7 +140,6 @@
             font-size: 14px;
             color: var(--tg-theme-hint-color);
         }
-        /* --- END: Highlighted User Styles --- */
 
         #leaderboard-list {
             list-style: none;
@@ -159,13 +155,7 @@
             background: var(--item-bg);
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
-        .rank {
-            font-size: 20px;
-            font-weight: 700;
-            width: 45px;
-            text-align: center;
-            flex-shrink: 0;
-        }
+        .rank { font-size: 20px; font-weight: 700; width: 45px; text-align: center; flex-shrink: 0; }
         .medal { font-size: 28px; }
         .user-info { flex-grow: 1; margin-right: 15px; overflow: hidden; }
         .user-name { font-weight: 700; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -217,13 +207,13 @@
         let allUsers = [];
 
         function startCountdown() {
-            const nowInTehran = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Tehran' }));
-            const nextMidnight = new Date(nowInTehran);
-            nextMidnight.setDate(nextMidnight.getDate() + 1);
-            nextMidnight.setHours(0, 0, 0, 0);
-
-            const countdownEndDate = new Date(nextMidnight.getTime() + (7 * 24 * 60 * 60 * 1000));
-            const totalDuration = 7 * 24 * 60 * 60 * 1000;
+            // تاریخ پایان ثابت: این تاریخ تغییر نمی‌کند و برای همه‌ی کاربران یکسان است
+            // این تاریخ برای ۲ روز و ۶ ساعت بعد از زمان تولید کد تنظیم شده است
+            const countdownEndDate = new Date('2025-09-22T17:11:00');
+            
+            // محاسبه مدت زمان کل برای نوار پیشرفت فقط یک بار در ابتدا
+            // این باعث می‌شود نوار پیشرفت به درستی کار کند حتی اگر کاربر صفحه را دیر باز کند
+            let initialRemainingTime = countdownEndDate.getTime() - new Date().getTime();
 
             const timerInterval = setInterval(function() {
                 const now = new Date();
@@ -231,9 +221,10 @@
                 const countdownTextElement = document.getElementById("countdown-text");
                 const progressBarElement = document.getElementById("progress-bar");
 
-                if (distance < 0) {
+                if (distance <= 0) {
                     clearInterval(timerInterval);
-                    countdownTextElement.innerHTML = `🎉 قرعه کشی بزرگ آقای مرزبان با 50 میلیون جایزه نقدی به پایان رسید! 🎉`;
+                    // پیام رسمی و مناسب برای زمان پایان جشنواره
+                    countdownTextElement.innerHTML = `⏳ جشنواره به پایان رسیده است. نتایج پس از بررسی نهایی اعلام خواهند شد. از شکیبایی شما سپاسگزاریم.`;
                     document.getElementById("progress-bar-container").style.display = "none";
                     return;
                 }
@@ -246,10 +237,11 @@
                     فقط <span class="highlight">${days} روز</span> و 
                     <span class="highlight">${hours} ساعت</span> و 
                     <span class="highlight">${minutes} دقیقه</span> 
-                    مانده تا قرعه کشی بزرگ آقای مرزبان با 50 میلیون جایزه نقدی برای 10 نفر
+                    مانده تا پایان جشنواره
                 `;
                 
-                const progressPercentage = Math.max(0, (distance / totalDuration) * 100);
+                // محاسبه درصد پیشرفت بر اساس زمان باقی‌مانده اولیه
+                const progressPercentage = Math.max(0, (distance / initialRemainingTime) * 100);
                 progressBarElement.style.width = `${progressPercentage}%`;
             }, 1000);
         }
@@ -267,11 +259,11 @@
                         root.style.setProperty(cssVar, theme[key]);
                     }
                 }
-                 if(theme.secondary_bg_color) {
+                if(theme.secondary_bg_color) {
                     root.style.setProperty('--tg-theme-secondary-bg', theme.secondary_bg_color);
-                 } else {
+                } else {
                     root.style.setProperty('--tg-theme-secondary-bg', '#f4f4f5');
-                 }
+                }
                 tg.expand();
             } catch (e) {
                 console.warn("Telegram WebApp script not found. Using default theme.");
@@ -283,17 +275,10 @@
             const container = document.getElementById('highlighted-user-container');
             try {
                 const response = await fetch(`${API_BASE_URL}/user/${userId}`);
-                if (!response.ok) return; // Fail silently if user not found or error
+                if (!response.ok) return;
 
                 const user = await response.json();
-                
-                let rankContent;
-                if (user.rank > 0) {
-                    rankContent = user.rank; // Always show the rank number, no medal
-                } else {
-                    rankContent = '...'; // Rank not in top 100 or not available
-                }
-
+                let rankContent = user.rank > 0 ? user.rank : '...';
                 const usernameDisplay = user.username ? `@...${user.username.slice(-4)}` : `ID: ...${String(user.id).slice(-4)}`;
 
                 container.innerHTML = `
@@ -311,7 +296,6 @@
                     </div>
                 `;
                 container.style.display = 'block';
-
             } catch (e) {
                 console.error("Failed to fetch highlighted user", e);
                 container.style.display = 'none';
@@ -329,18 +313,16 @@
             pageUsers.forEach((user, index) => {
                 const overallRank = start + index + 1;
                 let rankContent;
-                let liClass = 'list-item';
 
-                if (overallRank === 1) { rankContent = '<span class="medal">🥇</span>';} 
-                else if (overallRank === 2) { rankContent = '<span class="medal">🥈</span>';} 
-                else if (overallRank === 3) { rankContent = '<span class="medal">🥉</span>';} 
-                else { rankContent = overallRank; }
+                if (overallRank === 1) rankContent = '<span class="medal">🥇</span>';
+                else if (overallRank === 2) rankContent = '<span class="medal">🥈</span>';
+                else if (overallRank === 3) rankContent = '<span class="medal">🥉</span>';
+                else rankContent = overallRank;
                 
                 const usernameDisplay = user.username ? `@...${user.username.slice(-4)}` : `ID: ...${String(user.id).slice(-4)}`;
 
                 const listItem = document.createElement('li');
-                listItem.className = liClass;
-                
+                listItem.className = 'list-item';
                 listItem.innerHTML = `
                     <div class="rank">${rankContent}</div>
                     <div class="user-info">
@@ -371,54 +353,53 @@
                 if (!response.ok) throw new Error('خطا در دریافت اطلاعات');
                 allUsers = await response.json();
 
-                if (allUsers.length === 0) {
-                    loadingElement.textContent = 'هنوز هیچ شرکت‌کننده‌ای امتیازی کسب نکرده است.';
-                    participantsCountElement.textContent = '0';
-                    return;
+                if (allUsers.length > 0) {
+                    totalPages = Math.ceil(allUsers.length / ITEMS_PER_PAGE);
+                    renderPage(currentPage);
+                    loadingElement.style.display = 'none';
+                    paginationElement.style.display = 'flex';
+                    participantsCountElement.textContent = allUsers.length.toLocaleString('fa');
+                } else {
+                    loadingElement.textContent = 'هنوز شرکت‌کننده‌ای ثبت نشده است.';
+                    participantsCountElement.textContent = '۰';
                 }
-                
-                totalPages = Math.ceil(allUsers.length / ITEMS_PER_PAGE);
-                renderPage(currentPage);
-                
+            } catch (err) {
                 loadingElement.style.display = 'none';
-                paginationElement.style.display = 'flex';
-                participantsCountElement.textContent = allUsers.length;
-
-            } catch (error) {
-                loadingElement.style.display = 'none';
-                errorElement.textContent = error.message;
+                errorElement.textContent = err.message;
                 errorElement.style.display = 'block';
-                participantsCountElement.textContent = 'خطا';
-            }
-        }
-        
-        async function handleUrlParameters() {
-            try {
-                const params = new URLSearchParams(window.location.search);
-                const userId = params.get('user_id');
-                if (userId) {
-                    await fetchAndDisplayHighlightedUser(userId);
-                }
-            } catch (e) {
-                console.error("Error processing URL parameters:", e);
+                participantsCountElement.textContent = '۰';
             }
         }
 
         document.addEventListener('DOMContentLoaded', () => {
             initTelegramTheme();
-            handleUrlParameters();
-            fetchLeaderboard();
             startCountdown();
 
+            const urlParams = new URLSearchParams(window.location.search);
+            const userId = urlParams.get('user_id');
+
+            if (userId) {
+                fetchAndDisplayHighlightedUser(userId);
+            }
+
+            fetchLeaderboard();
+
             document.getElementById('prev-btn').addEventListener('click', () => {
-                if (currentPage > 1) { currentPage--; renderPage(currentPage); }
+                if (currentPage > 1) {
+                    currentPage--;
+                    renderPage(currentPage);
+                    window.scrollTo(0, 0);
+                }
             });
 
             document.getElementById('next-btn').addEventListener('click', () => {
-                if (currentPage < totalPages) { currentPage++; renderPage(currentPage); }
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    renderPage(currentPage);
+                     window.scrollTo(0, 0);
+                }
             });
         });
     </script>
 </body>
 </html>
-
